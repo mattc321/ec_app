@@ -7,6 +7,7 @@ files[] = views/handlers/ec_app_handler_field_next_sv.inc
 files[] = views/handlers/ec_app_handler_field_next_sv_date.inc
 files[] = views/handlers/ec_app_handler_field_display_all_services.inc
 files[] = views/handlers/ec_app_handler_filter_by_assignee.inc
+files[] = views/handlers/ec_app_handler_filter_by_service.inc
 
 dependencies[] = entityreference
 dependencies[] = field_collection

@@ -42,4 +42,13 @@ function ec_app_views_data_alter(&$data) {
       'handler' => 'ec_app_handler_filter_by_assignee',
     ),
   );
+  $data['node']['service_select'] = array(
+    'title' => t('Filter by Service'),
+    'group' => t('Content'),
+    'help' => t('Bring service node titles into a multi choice dropdown for filtering'),
+    'real field' => 'nid',
+    'filter' => array(
+      'handler' => 'ec_app_handler_filter_by_service',
+    ),
+  );
 }

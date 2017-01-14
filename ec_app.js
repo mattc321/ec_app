@@ -70,10 +70,20 @@
 			});
 		});
 
-		//accounts view page
+		//selectize controls
 		if ($('.ec-selectize').length > 0) {
+			
 			$.getScript("/sites/all/libraries/selectize/dist/js/standalone/selectize.min.js", function(){
 				 $('.ec-selectize').selectize({
+					 maxItems: 10
+				 });
+			});
+			
+		}
+				//selectize controls
+		if ($('.test-selectize').length > 0) {
+			$.getScript("/sites/all/libraries/selectize/dist/js/standalone/selectize.min.js", function(){
+				 $('.test-selectize').selectize({
 					 maxItems: 10
 				 });
 			});
@@ -225,7 +235,7 @@
 			
 			//html from ec_app
 			//gives user a projected End Date based on their calculations
-			$('.ex_msg').click(function() { 
+			$('.ex_msg').click(function() {
 				var tt = document.getElementById('edit-field-intake-date-und-0-value-datepicker-popup-0').value;
 				if(tt == '') {
 					tt = Date();
@@ -246,7 +256,7 @@
 			
 			
 			//gotta var this so we can set the text from field_address focusout
-			$(function () {	
+			$(function () {
 				var text = $("label[for=jquery_msg]").text();
 			});
 
