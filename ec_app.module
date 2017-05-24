@@ -449,26 +449,23 @@ function ec_app_mail ($key, &$message, $params) {
 		$message['body'][] = t('Comment: @cbod', array('@cbod' => $params['body']));
 		$alias = drupal_get_path_alias('node/'.$params['unode']);
 		$message['body'][] = t('Go here to view: http://ecteam.net/@alias', array('@alias' => $alias));
-		
 	}
 	if($key ==  'notify_assignee') {
-	  //dpm('test');
 		$message['to'] = $params['uemail'];
 		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
 		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
 		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
 		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
-		$alias = drupal_get_path_alias('node/'.$params['unode']);
-		$message['body'][] = t('Go here to view: http://ecteam.net/@alias', array('@alias' => $alias));
+		$message['body'][] = t('Go here to view: http://ecteam.net/@unode', array('@unode' => $params['unode']));
 	}
 	if($key ==  'notify_ec_user_2') {
+		//this is called from presave
 		$message['to'] = $params['uemail'];
 		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
 		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
 		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
 		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
-		$alias = drupal_get_path_alias('node/'.$params['unode']);
-		$message['body'][] = t('Go here to view: http://ecteam.net/@alias', array('@alias' => $alias));
+		$message['body'][] = t('Go here to view: http://ecteam.net/@unode', array('@unode' => $params['unode']));
 
   }
 }
@@ -634,7 +631,8 @@ switch ($node->type) {
  *
  */
 function ec_app_form_alter(&$form, &$form_state, $form_id) {
-	
+
+	//add js to forms
  	$path = drupal_get_path('module', 'ec_app');
 	drupal_add_js ("$path/ec_app.js");
 
@@ -937,32 +935,37 @@ function ec_app_form_node_delete_confirm_alter(&$form, &$form_state, $form_id) {
  * Implements hook_node_delete().
  *
  */
-function ec_app_node_delete($node) {	
+function ec_app_node_delete($node) {
 
 //need to unset the target id from the inline entity form on projects and opps if it gets deleted
   switch ($node->type) {
 	  case 'ol_todo':
+
 			$ttid = ec_app_ec_return_project($node->nid, 'projects', 'field_project_tasks');
 			
 			//if theyre the same that means parent nid was not found. Try the opp entity
 			if($ttid == $node->nid) { $ttid = ec_app_ec_return_project($node->nid, 'opportunities', 'field_opp_tasks'); }
-			
+		  	watchdog('ec_app','Deleting node: @nodeid  Parent node is: @pid',array('@nodeid' => $node->nid, '@pid' => $ttid));
 			if($ttid != $node->nid) {
 				$wrapper = node_load($ttid); //parent node
 				$my_id = $node->nid; //node being deleted		
 				switch ($wrapper->type) {
 					case 'opportunities':
+						watchdog('ec_app','Deleting task node parent node was opportunity');
 						foreach($wrapper->field_opp_tasks[LANGUAGE_NONE] as $delta => $field)  {
 							if ($field['target_id'] == $my_id) {
+								watchdog('ec_app','Deleting task node unsetting task nid from parent node opportunity');
 								unset($wrapper->field_opp_tasks[LANGUAGE_NONE][$delta]);
 								node_save($wrapper);
 							}
 						}
 					break;
 					case 'projects':
+						watchdog('ec_app','Deleting node case was opportunity');
 						foreach($wrapper->field_project_tasks[LANGUAGE_NONE] as $delta => $field)  {
 						
 							if ($field['target_id'] == $my_id) {
+								watchdog('ec_app','Deleting task node unsetting task nid from parent node project');
 								unset($wrapper->field_project_tasks[LANGUAGE_NONE][$delta]);
 								node_submit($wrapper);
 								node_save($wrapper);
@@ -1144,16 +1147,29 @@ function ec_app_ajax_callback($page_callback_result) {
  *
  **/
 function ec_app_node_view($node, $view_mode, $langcode) {
+global $user;
 
- if (isset($_GET['task'])=='deletetasks') {
-	 if (count($node->field_project_tasks[LANGUAGE_NONE]) > 0) {
-		foreach ($node->field_project_tasks[LANGUAGE_NONE] as $pee => $balue) {
-		 node_delete($balue['target_id']);
-		 
+// if (isset($_GET['task'])=='deletetasks' && $user->uid == 1) {
+//	 if (count($node->field_project_tasks[LANGUAGE_NONE]) > 0) {
+//		foreach ($node->field_project_tasks[LANGUAGE_NONE] as $pee => $balue) {
+//		 node_delete($balue['target_id']);
+//
+//		}
+//	 }
+//
+// }
+	//troubleshooting task nodes not unsetting from inline entity forms
+	if (isset($_GET['task']) && $_GET['task'] == 'cleantasks' && $user->uid == 1) {
+		$shit = node_load($node->nid);
+		dpm($shit);
+		if (count($node->field_project_tasks[LANGUAGE_NONE]) > 0) {
+			foreach ($node->field_project_tasks[LANGUAGE_NONE] as $pee => $balue) {
+				dpm($balue['target_id']);
+//				unset($balue['target_id']);
+
+			}
 		}
-	 }
-
- }
+	}
 if ($node->nid == 26274) {
 	//this is for the node that controls the users front page choice
 		$node->content['ajax_response'] = array(
@@ -1556,6 +1572,7 @@ function ec_app_menu_alter(&$items) {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 function ec_app_node_presave($node) {
+
   switch ($node->type) {
 	  	 
     case 'opportunities':
@@ -1768,23 +1785,26 @@ function ec_app_node_presave($node) {
 				// -> Create new tasks on this project based on those loaded tasks -> Save each new task -> Get its NID -> Add that NID to the entity reference 
 				// field_project_tasks
 				//IF THERE ARE SERVICES, AND IF THERE IS NO AUDIT ID THEN AND THE NODE IS NEW, LOAD THE SERVICES ETC.
-		if ($node->is_new || isset($_GET['tt'])) {
+		if ($node->is_new) {
+			
 			
 			//LOAD THE OPPORTUNITY AND GET ITS SERVICES - BUT ONLY IF IT DOES NOT HAVE AN AUDIT ID
 			// IF IT HAS AN AUDIT ID THAT INDICATES IT IS IMPORTED/OLD DATA AND SHOULD NOT CREATE TASKS AUTOMATICALLY
 			 $opportunity = node_load($node->field_opportunities['und'][0]['nid']);
+
 			 if(isset($opportunity->field_opportunity_services) && empty($opportunity->field_audit_id)){
-			
+
 			  foreach ($opportunity->field_opportunity_services['und'] as $key =>  $service_collection) {
+			
 				$service_col = field_collection_item_load($service_collection['value']);
 				$service = node_load($service_col->field_opportunity_service['und'][0]['target_id']);
 				if($service && !empty($service->field_service_tasks)){
-				
+			
 				  $node_tasks = $node->field_project_tasks;
 				  $node_tasks = array_shift($node_tasks);
 
 				  $service_tasks = array_shift($service->field_service_tasks);
-
+					
 				  $nt = array_column($node_tasks, 'target_id');
 				  $st = array_unique(array_column($service_tasks, 'target_id'));
 				  $ntid;$stid;
@@ -1898,8 +1918,7 @@ function ec_app_node_presave($node) {
 	
 		global $user;
 		$node->revision_uid = $user->uid;
-		
-		
+
 			if (!empty($node->projectid)) {
 				$pid = $node->projectid;
 				$project = node_load($pid);
@@ -1928,6 +1947,7 @@ function ec_app_node_presave($node) {
 					$puser = user_load($node->field_todo_user_reference[LANGUAGE_NONE][0]['uid']);
 					$poster = $user->name;
 					$unode = drupal_get_path_alias('node/'.$node->nid);
+
 					$pemail = $puser->mail;
 			
 					$lnode = node_load($pnode);
@@ -2095,4 +2115,12 @@ function ec_app_node_update($node) {
 		default:
 		break;
 	}
+}
+
+function ec_app_views_query_alter(&$view, &$query) {
+	// (Example assuming a view with an exposed filter on node title.)
+	// If the input for the title filter is a positive integer, filter against
+	// node ID instead of node title.
+
+
 }
