@@ -1,0 +1,11 @@
+name = EC Task Credits
+core = 7.x
+description = Secondary module that extends functionality of tasks (ol_todo). Certain types of tasks have credits associated with them. The user can select a credit, add a photo and type a message.
+
+dependencies[] = ec_app
+
+; Written by Matt Campbell cascadiamatt@gmail.com 2017-05-24
+version = "7.x-1.0"
+core = "7.x"
+project = "ec_task_credits"
+datestamp = "1386094705"
