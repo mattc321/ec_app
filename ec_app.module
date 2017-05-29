@@ -1161,10 +1161,10 @@ global $user;
 	//troubleshooting task nodes not unsetting from inline entity forms
 	if (isset($_GET['task']) && $_GET['task'] == 'cleantasks' && $user->uid == 1) {
 		$shit = node_load($node->nid);
-		dpm($shit);
+//		dpm($shit);
 		if (count($node->field_project_tasks[LANGUAGE_NONE]) > 0) {
 			foreach ($node->field_project_tasks[LANGUAGE_NONE] as $pee => $balue) {
-				dpm($balue['target_id']);
+//				dpm($balue['target_id']);
 //				unset($balue['target_id']);
 
 			}

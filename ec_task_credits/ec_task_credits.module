@@ -7,30 +7,14 @@
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
 	if ($node->type == 'ol_todo') {
 		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'])) {
-			$task_list = node_load($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid']);
-			if ($task_list->title == 'Site Visits') {
-				switch($node->title) {
-					case 'Insulation':
-						$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
-						$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
-//						dpm($terms_insulation);
-
-						$output = theme('vocab_list', array('images' => '1 2 3'));
-						dpm($output);
-
-						break;
-
-					case 'Framing':
-						$vocab_framing = taxonomy_vocabulary_machine_name_load('credit_list_framing');
-						$terms_framing = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_framing->vid));
-//						dpm($terms_framing);
-						break;
-
-					case 'Final + Blower Door':
-						break;
-
-				}
-			}
+			$output = theme('vocab_list', array(
+				'task_nid' => $node->nid,
+				'task_list_nid' => $node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'],
+				)
+			);
+			$node->content['vocab_list_container'] = array(
+				'#markup' => $output,
+			);
 		}
 
 	}
@@ -39,7 +23,6 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 function ec_task_credits_preprocess_node(&$variables) {
 
 	if ($variables['nid'] == 29523) {
-
 
 	}
 }
@@ -81,7 +64,28 @@ function ec_task_credits_theme($existing, $type, $theme, $path) {
 /** Optional callback to manipulate and set variables */
 function ec_task_credits_preprocess_vocab_list(&$vars) {
 	// This variable will be available in the template file as $custom_value
-	$vars['custom_value'] = 'Hello!';
+	$task_list = node_load($vars['task_list_nid']);
+	$node = node_load($vars['task_nid']);
+	if ($task_list->title == 'Site Visits') {
+		switch($node->title) {
+			case 'Insulation':
+				$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
+				$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
+				$vars['terms'] = $terms_insulation;
+				break;
+
+			case 'Framing':
+				$vocab_framing = taxonomy_vocabulary_machine_name_load('credit_list_framing');
+				$terms_framing = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_framing->vid));
+				$vars['terms'] = $terms_framing;
+				break;
+
+			case 'Final + Blower Door':
+				$vars['terms'] = '';
+				break;
+
+		}
+	}
 }
 
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
