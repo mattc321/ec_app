@@ -7,6 +7,10 @@
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
 	if ($node->type == 'ol_todo') {
 		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'])) {
+
+			$path = drupal_get_path('module', 'ec_task_credits');
+			drupal_add_css ("$path/css/task_credits.css");
+
 			$output = theme('vocab_list', array(
 				'task_nid' => $node->nid,
 				'task_list_nid' => $node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'],
@@ -86,6 +90,17 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 
 		}
 	}
+
+//	$element['upload'] = array(
+//		'#name' => 'files[' . implode('_', $element['#parents']) . ']',
+//		'#type' => 'file',
+//		'#title' => t('Choose a file'),
+//		'#title_display' => 'invisible',
+//		'#size' => 22,
+//		'#theme_wrappers' => array(),
+//		'#weight' => -10,
+//	);
+
 }
 
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
