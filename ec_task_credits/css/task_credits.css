@@ -1,0 +1,19 @@
+.credit-list-container {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 5px 10px;
+    border-padding: 5px;
+}
+.credit-row {
+    display: table-row;
+    box-shadow: -2px 5px 6px rgba(233, 233, 233, 0.55);
+    /* border-left: 10px solid black; */
+    /* margin: 5px; */
+    /* padding: 5px; */
+}
+.credit-cell {
+    display: table-cell;
+}
+.credit-right textarea {
+    margin-top: -10px;
+}
