@@ -17,4 +17,13 @@
 
 
 </div>
-<?php //dpm($term_fields);?>
+
+<div class="credit-list-container">
+    <?php foreach ($term_fields as $term_field): ?>
+        <?php dpm($term_field); ?>
+    <?php endforeach; ?>
+
+
+</div>
+
+<?php dpm($term_fields);?>
