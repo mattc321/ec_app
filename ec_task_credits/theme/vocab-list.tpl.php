@@ -17,4 +17,4 @@
 
 
 </div>
-<?php dpm($terms);?>
+<?php //dpm($term_fields);?>

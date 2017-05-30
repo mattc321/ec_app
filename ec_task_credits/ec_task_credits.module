@@ -16,14 +16,9 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 				'task_list_nid' => $node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'],
 				)
 			);
+			//returns the output from preprocess_vocab_list
 			$node->content['vocab_list_container'] = array(
 				'#markup' => $output,
-			);
-			$node->content['credit_browse'] = array (
-				'#type' => 'submit',
-				'#name' => 'credit_browse',
-				'#title' => t('My Field'),
-				'#value' => t('Browse'),
 			);
 		}
 
@@ -94,9 +89,53 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 			case 'Final + Blower Door':
 				$vars['terms'] = '';
 				break;
+			default:
+				 $vars['terms'] = '';
+				break;
 
 		}
+		//build the term fields
+		//for each term, create a $field and an accompanying browse control and textbox
+		//then put that array inside a $form array and return the whole thing to the template
+		$form = array();
+		if (!empty($vars['terms'])) {
+			$i=0;
+			foreach ($vars['terms'] as $tid => $term){
+				$form['term_group_'.$i] = array(
+					'term_field_'.$term->tid => array(
+						'#markup' => $term->name,
+						'#tid' => $term->tid,
+					),
+					'browse_credit_'.$term->tid => array(
+						'#type' => 'submit',
+						'#name' => 'browse_credit_'.$term->tid,
+						'#title' => t('Browse'),
+						'#value' => t('Browse'),
+					),
+					'comment_credit_'.$term->tid => array(
+						'#type' => 'textarea',
+						'#name' => 'comment_credit'.$term->tid,
+						'#title' => t('Comment'),
+						'#value' => t('Comment'),
+					),
+				);
+				$i++;
+
+			}
+			$vars['term_fields'] = $form;
+		}
+
+
 	}
+//
+//	$form = array(
+//		$node->content['credit_browse'] = array (
+//			'#type' => 'submit',
+//			'#name' => 'credit_browse',
+//			'#title' => t('My Field'),
+//			'#value' => t('Browse'),
+//		)
+//	);
 
 //	$element['upload'] = array(
 //		'#name' => 'files[' . implode('_', $element['#parents']) . ']',
