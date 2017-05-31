@@ -67,7 +67,8 @@ function ec_task_credits_theme($existing, $type, $theme, $path) {
  * Callback for the vocab_list template. Adds fields
  */
 function ec_task_credits_preprocess_vocab_list(&$vars) {
-	// This variable will be available in the template file as $custom_value
+	// Add vocabulary output to template file
+	// build a form send it to the template file
 	$task_list = node_load($vars['task_list_nid']);
 	$node = node_load($vars['task_nid']);
 	if ($task_list->title == 'Site Visits') {
@@ -105,13 +106,21 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 						'#tid' => $term->tid,
 					),
 					'browse_credit' => array(
-						'#type' => 'submit',
+						'#type' => 'managed_file',
 						'#name' => 'browse_credit_'.$term->tid,
-						'#title' => t('Browse'),
 						'#value' => t('Browse'),
+						'#title' => t('Browse'),
+						'#default_value' => variable_get('rate_table_logo', ''),
+						'#upload_location' => 'public://files/',
 					),
 					'comment_credit' => array(
 						'#type' => 'textarea',
+						'#name' => 'comment_credit'.$term->tid,
+						'#title' => t('Comment'),
+						'#value' => t('Comment'),
+					),
+					'submit' => array(
+						'#type' => 'submit',
 						'#name' => 'comment_credit'.$term->tid,
 						'#title' => t('Comment'),
 						'#value' => t('Comment'),
@@ -120,7 +129,18 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 				$i++;
 
 			}
+			$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $vars['terms']);
+//			if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
+//				$realpath = $wrapper->realpath();
+//				$url = $wrapper->getExternalUrl();
+//				dpm($realpath);
+//				dpm($url);
+//			}
 			$vars['term_fields'] = $form;
+
+//$result = db_query('SELECT field_last_name_value FROM {field_data_field_last_name} WHERE entity_id = 7273', 2);
+//$name1=db_result(db_query(, 2));
+
 		}
 
 
@@ -145,6 +165,70 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 //		'#weight' => -10,
 //	);
 
+}
+
+function ec_task_credits_credit_form_validate($form, &$form_state) {
+
+	dpm($form_state);
+	form_set_error('', t('It looks like your badge# is incorrect :('));
+}
+
+function ec_task_credits_credit_form_submit($form, &$form_state) {
+
+	if (isset($form_state['values']['browse_credit'])) {
+		$file = file_load($form_state['values']['custom_content_block_image']);
+
+		$file->status = FILE_STATUS_PERMANENT;
+
+		file_save($file);
+	}
+}
+
+function ec_task_credits_credit_form($form, $form_state, $terms) {
+	dpm($terms);
+
+	$form = array();
+	if (!empty($terms)) {
+		$i=0;
+		foreach ($terms as $tid => $term){
+			$form['term_group_'.$i] = array(
+				'term_field' => array(
+					'#markup' => $term->name,
+					'#tid' => $term->tid,
+				),
+				'browse_credit' => array(
+					'#type' => 'managed_file',
+					'#name' => 'browse_credit_'.$term->tid,
+					'#title' => t('Block image'),
+					'#size' => 40,
+					'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
+					'#upload_location' => 'public://'
+				),
+				'comment_credit' => array(
+					'#type' => 'textarea',
+					'#name' => 'comment_credit'.$term->tid,
+					'#title' => t('Comment'),
+					'#value' => t('Comment'),
+				),
+				'submit' => array(
+					'#type' => 'submit',
+					'#name' => 'comment_credit'.$term->tid,
+					'#title' => t('Comment'),
+					'#value' => t('Comment'),
+				),
+			);
+			$i++;
+
+		}
+
+
+	} else {
+		$form['None_found'] = array(
+			'#markup' => 'No vocab was found',
+		);
+	}
+
+	return $form;
 }
 
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {

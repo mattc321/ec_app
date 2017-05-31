@@ -3,10 +3,12 @@
 class ec_app_handler_field_next_sv_date extends views_handler_field_date {
 
   function query() {
+
     $terms = taxonomy_get_term_by_name('Open', 'labels_todo_s');
     if ((!$term = array_shift($terms)) || empty($term->tid)) {
       return;
     }
+
     $nid = db_select('node', 'n')
       ->fields('n', array('nid'))
       ->condition('n.type', 'ol_todo_list')
@@ -16,6 +18,7 @@ class ec_app_handler_field_next_sv_date extends views_handler_field_date {
     if (empty($nid)) {
       return;
     }
+      
     $tid = $term->tid;
     $this->ensure_my_table();
     $sql = "SELECT ds.field_todo_due_date_singledate_value
@@ -34,7 +37,9 @@ class ec_app_handler_field_next_sv_date extends views_handler_field_date {
                 AND tl.field_todo_label_tid = " . $term->tid . "
               ORDER BY pt.delta
               LIMIT 0,1";
+
     $this->field_alias = $this->query->add_field(NULL, "($sql)", 'field_next_sv_date');
+
   }
 
   /*function render($values) {
