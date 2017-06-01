@@ -126,10 +126,11 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 						'#value' => t('Comment'),
 					),
 				);
+				$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name);
 				$i++;
 
 			}
-			$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $vars['terms']);
+//			$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $vars['terms']);
 //			if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
 //				$realpath = $wrapper->realpath();
 //				$url = $wrapper->getExternalUrl();
@@ -166,15 +167,19 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 //	);
 
 }
+function ec_task_credits_credit_form_callback() {
+
+}
 
 function ec_task_credits_credit_form_validate($form, &$form_state) {
-
 	dpm($form_state);
+	dpm('test!');
 	form_set_error('', t('It looks like your badge# is incorrect :('));
 }
 
 function ec_task_credits_credit_form_submit($form, &$form_state) {
-
+	dpm('submit handler is running wtf?');
+	dpm($form);
 	if (isset($form_state['values']['browse_credit'])) {
 		$file = file_load($form_state['values']['custom_content_block_image']);
 
@@ -184,42 +189,71 @@ function ec_task_credits_credit_form_submit($form, &$form_state) {
 	}
 }
 
-function ec_task_credits_credit_form($form, $form_state, $terms) {
-	dpm($terms);
+function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) {
 
-	$form = array();
-	if (!empty($terms)) {
-		$i=0;
-		foreach ($terms as $tid => $term){
-			$form['term_group_'.$i] = array(
-				'term_field' => array(
-					'#markup' => $term->name,
-					'#tid' => $term->tid,
-				),
-				'browse_credit' => array(
-					'#type' => 'managed_file',
-					'#name' => 'browse_credit_'.$term->tid,
-					'#title' => t('Block image'),
-					'#size' => 40,
-					'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
-					'#upload_location' => 'public://'
-				),
-				'comment_credit' => array(
-					'#type' => 'textarea',
-					'#name' => 'comment_credit'.$term->tid,
-					'#title' => t('Comment'),
-					'#value' => t('Comment'),
-				),
-				'submit' => array(
-					'#type' => 'submit',
-					'#name' => 'comment_credit'.$term->tid,
-					'#title' => t('Comment'),
-					'#value' => t('Comment'),
-				),
-			);
-			$i++;
+//	$form['#id'] = 'task_credit_form_'.$
+	if (!empty($term_id)) {
+		$form_id = '';
+		$form['#id'] = 'ec_task_credit_form_'.$term_id;
+		$form['#base'] = 'ec_task_credits_credit_form';
+		$form['term_group'] = array(
+			'term_field' => array(
+				'#markup' => $term_name,
+				'#tid' => $term_id,
+			),
+			'browse_credit' => array(
+				'#type' => 'managed_file',
+				'#name' => 'browse_credit_'.$term_id,
+				'#title' => t('Block image'),
+				'#size' => 40,
+				'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
+				'#upload_location' => 'public://'
+			),
+			'comment_credit' => array(
+				'#type' => 'textarea',
+				'#name' => 'comment_credit_'.$term_id,
+				'#title' => t('Comment'),
+				'#value' => t('Comment'),
+			),
+			'submit' => array(
+				'#type' => 'submit',
+				'#name' => 'comment_credit_'.$term_id,
+				'#title' => t('Save'),
+				'#value' => t('Save'),
+			),
+		);
 
-		}
+//		$i=0;
+//		foreach ($terms as $tid => $term){
+//			$form['term_group_'.$i] = array(
+//				'term_field' => array(
+//					'#markup' => $term->name,
+//					'#tid' => $term->tid,
+//				),
+//				'browse_credit' => array(
+//					'#type' => 'managed_file',
+//					'#name' => 'browse_credit_'.$term->tid,
+//					'#title' => t('Block image'),
+//					'#size' => 40,
+//					'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
+//					'#upload_location' => 'public://'
+//				),
+//				'comment_credit' => array(
+//					'#type' => 'textarea',
+//					'#name' => 'comment_credit'.$term->tid,
+//					'#title' => t('Comment'),
+//					'#value' => t('Comment'),
+//				),
+//				'submit' => array(
+//					'#type' => 'submit',
+//					'#name' => 'comment_credit'.$term->tid,
+//					'#title' => t('Comment'),
+//					'#value' => t('Comment'),
+//				),
+//			);
+//			$i++;
+//
+//		}
 
 
 	} else {
@@ -227,11 +261,18 @@ function ec_task_credits_credit_form($form, $form_state, $terms) {
 			'#markup' => 'No vocab was found',
 		);
 	}
-
+//	dpm($form);
 	return $form;
 }
 
+function ec_task_credits_forms($form_id, $args) {
+
+	$forms['ec_task_credits_credit_form']['callback'] = 'ec_task_credits_credit_form_callback';
+	return $forms;
+}
+
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
+	dpm($form_id);
 	if ($form_id == 'ol_todo_node_form') {
 		if(isset($form['field_task_credits'])) {
 			$form['field_task_credits']['#attributes']['class'][] = 'hide-field';
