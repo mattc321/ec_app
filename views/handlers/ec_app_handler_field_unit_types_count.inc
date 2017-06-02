@@ -45,9 +45,9 @@ class ec_app_handler_field_unit_types_count extends views_handler_field {
 			$sql = "SELECT COUNT(*) FROM {field_data_field_units} fu JOIN {field_data_field_unit_types} ut ON ut.entity_id = fu.field_units_value
 			WHERE fu.entity_id = node.nid AND ut.entity_type = 'field_collection_item' AND ut.bundle = 'field_units' AND ut.deleted = 0 AND ut.field_unit_types_tid = " . $tid;
 		}
+
 		$table = $this->ensure_my_table();
 		$this->field_alias = $this->query->add_field(NULL, "($sql)", 'field_unit_types_count');
-	
 	} else {
 	
 		if ($tid == 70) {
@@ -102,8 +102,8 @@ class ec_app_handler_field_unit_types_count extends views_handler_field {
   }
 
   function render($values) {
-    $output = '';
-    $value = $this->get_value($values);
-    return empty($value) ? '' : $value;
+	$output = '';
+	$value = $this->get_value($values);
+	return empty($value) ? '' : $value;
   }
 }

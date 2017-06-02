@@ -36,6 +36,12 @@ function ec_task_credits_menu() {
 		'access callback' => TRUE,
 		'page callback' => 'ec_task_credits_callback',
 	];
+	$items['test_credit_form'] = [
+		'access callback' => TRUE,
+		'page callback' => 'ec_task_credits_test_form_callback',
+	];
+
+
 	return $items;
 }
 
@@ -100,35 +106,8 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 		if (!empty($vars['terms'])) {
 			$i=0;
 			foreach ($vars['terms'] as $tid => $term){
-				$form['term_group_'.$i] = array(
-					'term_field' => array(
-						'#markup' => $term->name,
-						'#tid' => $term->tid,
-					),
-					'browse_credit' => array(
-						'#type' => 'managed_file',
-						'#name' => 'browse_credit_'.$term->tid,
-						'#value' => t('Browse'),
-						'#title' => t('Browse'),
-						'#default_value' => variable_get('rate_table_logo', ''),
-						'#upload_location' => 'public://files/',
-					),
-					'comment_credit' => array(
-						'#type' => 'textarea',
-						'#name' => 'comment_credit'.$term->tid,
-						'#title' => t('Comment'),
-						'#value' => t('Comment'),
-					),
-					'submit' => array(
-						'#type' => 'submit',
-						'#name' => 'comment_credit'.$term->tid,
-						'#title' => t('Comment'),
-						'#value' => t('Comment'),
-					),
-				);
 				$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name);
 				$i++;
-
 			}
 //			$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $vars['terms']);
 //			if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
@@ -168,92 +147,93 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 
 }
 function ec_task_credits_credit_form_callback() {
-
+	return drupal_get_form('ec_task_credits_credit_form', '999', 'testName');
 }
 
 function ec_task_credits_credit_form_validate($form, &$form_state) {
-	dpm($form_state);
-	dpm('test!');
-	form_set_error('', t('It looks like your badge# is incorrect :('));
+	//form_set_error('', t('Force this error for now'));
 }
 
 function ec_task_credits_credit_form_submit($form, &$form_state) {
-	dpm('submit handler is running wtf?');
-	dpm($form);
-	if (isset($form_state['values']['browse_credit'])) {
-		$file = file_load($form_state['values']['custom_content_block_image']);
-
-		$file->status = FILE_STATUS_PERMANENT;
-
-		file_save($file);
-	}
+	dpm($form_state);
+	dpm('im the submit');
+//	if (isset($form_state['values']['browse_credit'])) {
+//		$file = file_load($form_state['values']['custom_content_block_image']);
+//
+//		$file->status = FILE_STATUS_PERMANENT;
+//
+//		file_save($file);
+//	}
 }
 
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) {
 
 //	$form['#id'] = 'task_credit_form_'.$
+
 	if (!empty($term_id)) {
 		$form_id = '';
-		$form['#id'] = 'ec_task_credit_form_'.$term_id;
+		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
 		$form['#base'] = 'ec_task_credits_credit_form';
-		$form['term_group'] = array(
-			'term_field' => array(
-				'#markup' => $term_name,
-				'#tid' => $term_id,
-			),
-			'browse_credit' => array(
-				'#type' => 'managed_file',
-				'#name' => 'browse_credit_'.$term_id,
-				'#title' => t('Block image'),
-				'#size' => 40,
-				'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
-				'#upload_location' => 'public://'
-			),
-			'comment_credit' => array(
-				'#type' => 'textarea',
-				'#name' => 'comment_credit_'.$term_id,
-				'#title' => t('Comment'),
-				'#value' => t('Comment'),
-			),
-			'submit' => array(
-				'#type' => 'submit',
-				'#name' => 'comment_credit_'.$term_id,
-				'#title' => t('Save'),
-				'#value' => t('Save'),
-			),
+
+		$form['term_field'] = array(
+			'#markup' => $term_name,
+			'#tid' => $term_id,
+			//'#id' => 'term_field_'.$term_id,
 		);
 
-//		$i=0;
-//		foreach ($terms as $tid => $term){
-//			$form['term_group_'.$i] = array(
-//				'term_field' => array(
-//					'#markup' => $term->name,
-//					'#tid' => $term->tid,
-//				),
-//				'browse_credit' => array(
-//					'#type' => 'managed_file',
-//					'#name' => 'browse_credit_'.$term->tid,
-//					'#title' => t('Block image'),
-//					'#size' => 40,
-//					'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
-//					'#upload_location' => 'public://'
-//				),
-//				'comment_credit' => array(
-//					'#type' => 'textarea',
-//					'#name' => 'comment_credit'.$term->tid,
-//					'#title' => t('Comment'),
-//					'#value' => t('Comment'),
-//				),
-//				'submit' => array(
-//					'#type' => 'submit',
-//					'#name' => 'comment_credit'.$term->tid,
-//					'#title' => t('Comment'),
-//					'#value' => t('Comment'),
-//				),
-//			);
-//			$i++;
-//
-//		}
+		$form['browse_credit'] = array(
+			'#type' => 'managed_file',
+			//'#name' => 'browse_credit_'.$term_id,
+			'#title' => t('Block image'),
+			'#size' => 40,
+			'#id' => 'browse_credit_'.$term_id,
+			'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
+			'#upload_location' => 'public://'
+		);
+		$form['comment_credit'] = array(
+			'#type' => 'textarea',
+			//'#name' => 'comment_credit_'.$term_id,
+			'#id' => 'comment_credit_'.$term_id,
+			'#title' => t('Comment'),
+		);
+		$form['submit'] = array(
+			'#type' => 'submit',
+			//'#name' => 'comment_credit_'.$term_id,
+			'#id' => 'comment_credit_'.$term_id,
+			'#title' => t('Save'),
+			'#value' => t('Save'),
+		);
+
+//		$form['term_group'] = array(
+//			'term_field' => array(
+//				'#markup' => $term_name,
+//				'#tid' => $term_id,
+//				'#id' => 'term_field_'.$term_id,
+//			),
+//			'browse_credit' => array(
+//				'#type' => 'managed_file',
+//				'#name' => 'browse_credit_'.$term_id,
+//				'#title' => t('Block image'),
+//				'#size' => 40,
+//				'#id' => 'browse_credit_'.$term_id,
+//				'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
+//				'#upload_location' => 'public://'
+//			),
+//			'comment_credit' => array(
+//				'#type' => 'textarea',
+//				'#name' => 'comment_credit_'.$term_id,
+//				'#id' => 'comment_credit_'.$term_id,
+//				'#title' => t('Comment'),
+//			),
+//			'submit' => array(
+//				'#type' => 'submit',
+//				'#name' => 'comment_credit_'.$term_id,
+//				'#id' => 'comment_credit_'.$term_id,
+//				'#title' => t('Save'),
+//				'#value' => t('Save'),
+//			),
+//		);
+
 
 
 	} else {
@@ -265,14 +245,69 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) 
 	return $form;
 }
 
+function ec_task_credits_test_form_submit($form, &$form_state) {
+	dpm($form_state);
+}
+
+function ec_task_credits_test_form($form, &$form_state, $term_id) {
+	$form['#id'] = 'ec_task_credits_test_form_'.$term_id;
+	$form['name'] = array(
+		'#title' => 'username',
+		'#name' => 'username_'.$term_id,
+		'#id' => 'username_'.$term_id,
+		'#description' => 'choose a username',
+		'#type' => 'textfield',
+		'#required' => TRUE,
+	);
+	$form['mail'] = array(
+		'#title' => 'email',
+		'#name' => 'email_'.$term_id,
+		'#id' => 'email_'.$term_id,
+		'#description' => 'enter a valid email address',
+		'#type' => 'textfield',
+		'#required' => TRUE,
+	);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#name' => 'submit_'.$term_id,
+		'#id' => 'submit_'.$term_id,
+		'#value' => t('Save'),
+	);
+	return $form;
+}
+function ec_task_credits_test_form_callback() {
+	dpm('1');
+	return drupal_get_form('ec_task_credits_test_form', 888);
+}
 function ec_task_credits_forms($form_id, $args) {
 
-	$forms['ec_task_credits_credit_form']['callback'] = 'ec_task_credits_credit_form_callback';
+//	$forms['ec_task_credits_credit_form']['callback'] = 'ec_task_credits_credit_form_callback';
+//	return $forms;
+
+	// we can't declare a passed parameter, but we want one anyway
+	$args = func_get_args();
+	$form_id = $args[0][0];
+
+	// base ids for dynamic forms go here
+	$dynamic_forms = array(
+		'ec_task_credits_credit_form',
+		'my_module_beta_form',
+	);
+	$forms = array();
+	foreach ($dynamic_forms as $dynform) {
+//		dpm($dynform);
+		if (strpos($form_id, $dynform) === 0) { // === is important! see doc on strpos
+			$forms[$form_id] = array(
+				'callback' => $dynform,
+				// this get passed in before the rest of the args to drupal_get_form
+				'callback arguments' => array('testarg'),
+			);
+		}
+	}
 	return $forms;
 }
 
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
-	dpm($form_id);
 	if ($form_id == 'ol_todo_node_form') {
 		if(isset($form['field_task_credits'])) {
 			$form['field_task_credits']['#attributes']['class'][] = 'hide-field';
