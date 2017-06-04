@@ -23,6 +23,10 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 		}
 
 	}
+	if ($node->type == 'task_credit') {
+		dpm($node);
+	}
+
 }
 
 function ec_task_credits_preprocess_field(&$variables) {
@@ -34,18 +38,18 @@ function ec_task_credits_menu() {
 	$items = [];
 	$items['angular2'] = [
 		'access callback' => TRUE,
-		'page callback' => 'ec_task_credits_callback',
+		'page callback' => 'ec_task_credits_angular_callback',
 	];
-	$items['test_credit_form'] = [
-		'access callback' => TRUE,
-		'page callback' => 'ec_task_credits_test_form_callback',
-	];
+//	$items['test_credit_form'] = [
+//		'access callback' => TRUE,
+//		'page callback' => 'ec_task_credits_test_form_callback',
+//	];
 
 
 	return $items;
 }
 
-function ec_task_credits_callback() {
+function ec_task_credits_angular_callback() {
 	$build['content'] = [
 		'#theme' => [
 			'angular_component',
@@ -77,6 +81,7 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	// build a form send it to the template file
 	$task_list = node_load($vars['task_list_nid']);
 	$node = node_load($vars['task_nid']);
+
 	if ($task_list->title == 'Site Visits') {
 		switch($node->title) {
 			case 'Insulation':
@@ -106,49 +111,18 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 		if (!empty($vars['terms'])) {
 			$i=0;
 			foreach ($vars['terms'] as $tid => $term){
-				$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name);
+				//arguments go to $form_state['build_info']['args']
+				$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name, $node->nid);
 				$i++;
 			}
-//			$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $vars['terms']);
-//			if ($wrapper = file_stream_wrapper_get_instance_by_uri('public://')) {
-//				$realpath = $wrapper->realpath();
-//				$url = $wrapper->getExternalUrl();
-//				dpm($realpath);
-//				dpm($url);
-//			}
 			$vars['term_fields'] = $form;
-
-//$result = db_query('SELECT field_last_name_value FROM {field_data_field_last_name} WHERE entity_id = 7273', 2);
-//$name1=db_result(db_query(, 2));
 
 		}
 
 
 	}
-//
-//	$form = array(
-//		$node->content['credit_browse'] = array (
-//			'#type' => 'submit',
-//			'#name' => 'credit_browse',
-//			'#title' => t('My Field'),
-//			'#value' => t('Browse'),
-//		)
-//	);
-
-//	$element['upload'] = array(
-//		'#name' => 'files[' . implode('_', $element['#parents']) . ']',
-//		'#type' => 'file',
-//		'#title' => t('Choose a file'),
-//		'#title_display' => 'invisible',
-//		'#size' => 22,
-//		'#theme_wrappers' => array(),
-//		'#weight' => -10,
-//	);
-
 }
-function ec_task_credits_credit_form_callback() {
-	return drupal_get_form('ec_task_credits_credit_form', '999', 'testName');
-}
+
 
 function ec_task_credits_credit_form_validate($form, &$form_state) {
 	//form_set_error('', t('Force this error for now'));
@@ -157,33 +131,23 @@ function ec_task_credits_credit_form_validate($form, &$form_state) {
 function ec_task_credits_credit_form_submit($form, &$form_state) {
 	dpm($form_state);
 	dpm('im the submit');
-//	if (isset($form_state['values']['browse_credit'])) {
-//		$file = file_load($form_state['values']['custom_content_block_image']);
-//
-//		$file->status = FILE_STATUS_PERMANENT;
-//
-//		file_save($file);
-//	}
+
 }
 
-function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) {
+function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
 
-//	$form['#id'] = 'task_credit_form_'.$
 
 	if (!empty($term_id)) {
-		$form_id = '';
 		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
 		$form['#base'] = 'ec_task_credits_credit_form';
 
 		$form['term_field'] = array(
 			'#markup' => $term_name,
 			'#tid' => $term_id,
-			//'#id' => 'term_field_'.$term_id,
 		);
 
 		$form['browse_credit'] = array(
 			'#type' => 'managed_file',
-			//'#name' => 'browse_credit_'.$term_id,
 			'#title' => t('Block image'),
 			'#size' => 40,
 			'#id' => 'browse_credit_'.$term_id,
@@ -192,7 +156,6 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) 
 		);
 		$form['comment_credit'] = array(
 			'#type' => 'textarea',
-			//'#name' => 'comment_credit_'.$term_id,
 			'#id' => 'comment_credit_'.$term_id,
 			'#title' => t('Comment'),
 			'#attributes' => array(
@@ -201,7 +164,6 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) 
 		);
 		$form['submit'] = array(
 			'#type' => 'submit',
-			//'#name' => 'comment_credit_'.$term_id,
 			'#id' => 'submit_credit_'.$term_id,
 			'#title' => t('Save'),
 			'#value' => t('Save'),
@@ -212,39 +174,6 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) 
 				'effect' => 'fade',
 			),
 		);
-
-//		$form['term_group'] = array(
-//			'term_field' => array(
-//				'#markup' => $term_name,
-//				'#tid' => $term_id,
-//				'#id' => 'term_field_'.$term_id,
-//			),
-//			'browse_credit' => array(
-//				'#type' => 'managed_file',
-//				'#name' => 'browse_credit_'.$term_id,
-//				'#title' => t('Block image'),
-//				'#size' => 40,
-//				'#id' => 'browse_credit_'.$term_id,
-//				'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
-//				'#upload_location' => 'public://'
-//			),
-//			'comment_credit' => array(
-//				'#type' => 'textarea',
-//				'#name' => 'comment_credit_'.$term_id,
-//				'#id' => 'comment_credit_'.$term_id,
-//				'#title' => t('Comment'),
-//			),
-//			'submit' => array(
-//				'#type' => 'submit',
-//				'#name' => 'comment_credit_'.$term_id,
-//				'#id' => 'comment_credit_'.$term_id,
-//				'#title' => t('Save'),
-//				'#value' => t('Save'),
-//			),
-//		);
-
-
-
 	} else {
 		$form['None_found'] = array(
 			'#markup' => 'No vocab was found',
@@ -253,50 +182,68 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name) 
 //	dpm($form);
 	return $form;
 }
+
+/**
+ * @param $form
+ * @param $form_state
+ * @return string
+ */
 function ec_task_credits_form_ajax_submit($form, &$form_state) {
-	dpm('ajax callback');
-	dpm($form_state);
+
+	if(!empty($form_state['build_info']['args'])) {
+
+		global $user;
+
+		$tid = $form_state['build_info']['args'][0];
+		$body= $form_state['build_info']['args'][1];
+		$task_nid = $form_state['build_info']['args'][2];
+
+		$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
+
+		$node_info = array(
+			'title' => $title,
+			'task_nid' => $task_nid,
+			'tid' => $tid,
+			'body' => $body,
+			'poster' => $user->uid,
+		);
+
+		//create a new task credit node
+		$new_credit_nid = ec_task_credits_add_new_node($node_info);
+
+		//load the task node and reference to the new credit node from above
+		$task_node = node_load($task_nid);
+
+		if (isset($task_node->field_task_credits)) {
+			$task_node->field_task_credits[LANGUAGE_NONE][]['target_id'] = $new_credit_nid;
+		} else {
+			drupal_set_message(t('Unable to set a reference to this credit on the task.'), 'error');
+			watchdog('ec_task_credits', 'Error: field_task_credits is not set on the task node');
+		}
+
+
+	} else {
+		drupal_set_message('Arguments were not passed to the ajax submit function');
+		watchdog('ec_task_credits', 'Arguments were not properly passed to the ajax submit function.');
+		return $form;
+	}
+
 //	if (!empty($form_state['input']['comment'])) {
 //		return 'Subscribed !';
 //	} else {
 //		return $form;
 //	}
+//	if (isset($form_state['values']['browse_credit'])) {
+//		$file = file_load($form_state['values']['custom_content_block_image']);
+//		$file->status = FILE_STATUS_PERMANENT;
+//		file_save($file);
+//	}
+//	return $form;
 }
 
-function ec_task_credits_test_form_submit($form, &$form_state) {
-	dpm($form_state);
-}
-
-function ec_task_credits_test_form($form, &$form_state, $term_id) {
-	$form['#id'] = 'ec_task_credits_test_form_'.$term_id;
-	$form['name'] = array(
-		'#title' => 'username',
-		'#name' => 'username_'.$term_id,
-		'#id' => 'username_'.$term_id,
-		'#description' => 'choose a username',
-		'#type' => 'textfield',
-		'#required' => TRUE,
-	);
-	$form['mail'] = array(
-		'#title' => 'email',
-		'#name' => 'email_'.$term_id,
-		'#id' => 'email_'.$term_id,
-		'#description' => 'enter a valid email address',
-		'#type' => 'textfield',
-		'#required' => TRUE,
-	);
-	$form['submit'] = array(
-		'#type' => 'submit',
-		'#name' => 'submit_'.$term_id,
-		'#id' => 'submit_'.$term_id,
-		'#value' => t('Save'),
-	);
-	return $form;
-}
-function ec_task_credits_test_form_callback() {
-	dpm('1');
-	return drupal_get_form('ec_task_credits_test_form', 888);
-}
+/*
+ * hook_forms()
+ */
 function ec_task_credits_forms($form_id, $args) {
 
 //	$forms['ec_task_credits_credit_form']['callback'] = 'ec_task_credits_credit_form_callback';
@@ -328,8 +275,34 @@ function ec_task_credits_forms($form_id, $args) {
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
 	if ($form_id == 'ol_todo_node_form') {
 		if(isset($form['field_task_credits'])) {
-			$form['field_task_credits']['#attributes']['class'][] = 'hide-field';
+			//$form['field_task_credits']['#attributes']['class'][] = 'hide-field';
 		}
 	}
 
+}
+
+/**
+ * Custom function that creates a new task credit node
+ * @return The node id of the newly submitted task credit
+ */
+function ec_task_credits_add_new_node($node_info){
+	$new_credit = null;
+	$new_credit = new stdClass();
+	$new_credit->title = $node_info['title'];
+	$new_credit->body[LANGUAGE_NONE][0]['value'] = $node_info['body'];
+	$new_credit->type = 'task_credits';
+	$new_credit->language = LANGUAGE_NONE;
+	node_object_prepare($new_credit);
+	$new_credit->uid = $node_info['poster'];
+	$new_credit->status = 1;
+	$new_credit->promote = 0;
+	$new_credit->comment = 0;
+	$new_credit->path['pathauto'] = 1;
+	$new_credit->field_task_credit_term_reference[LANGUAGE_NONE][0]['value'] = $node_info['tid'];
+
+	node_submit($new_credit);
+	node_save($new_credit);
+	return $new_credit->nid;
+
+	//watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
 }
