@@ -7,7 +7,6 @@
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
 	if ($node->type == 'ol_todo') {
 		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'])) {
-
 			$path = drupal_get_path('module', 'ec_task_credits');
 			drupal_add_css ("$path/css/task_credits.css");
 
@@ -23,9 +22,9 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 		}
 
 	}
-	if ($node->type == 'task_credit') {
-		dpm($node);
-	}
+//	if ($node->type == 'task_credit') {
+//		dpm($node);
+//	}
 
 }
 
@@ -129,13 +128,10 @@ function ec_task_credits_credit_form_validate($form, &$form_state) {
 }
 
 function ec_task_credits_credit_form_submit($form, &$form_state) {
-	dpm($form_state);
-	dpm('im the submit');
 
 }
 
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
-
 
 	if (!empty($term_id)) {
 		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
@@ -162,6 +158,10 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 				'placeholder' => t('Comment'),
 			),
 		);
+		//selector for ajax response to user
+		$form['ajax_response'] = array(
+			'#markup' => '<div id="task-credit-ajax-response-'.$term_id.'" class="hide-field"></div>',
+		);
 		$form['submit'] = array(
 			'#type' => 'submit',
 			'#id' => 'submit_credit_'.$term_id,
@@ -174,12 +174,12 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 				'effect' => 'fade',
 			),
 		);
+
 	} else {
 		$form['None_found'] = array(
 			'#markup' => 'No vocab was found',
 		);
 	}
-//	dpm($form);
 	return $form;
 }
 
@@ -214,8 +214,18 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 		//load the task node and reference to the new credit node from above
 		$task_node = node_load($task_nid);
 
+		//if theres a ref field, populate with the nid you just made
 		if (isset($task_node->field_task_credits)) {
 			$task_node->field_task_credits[LANGUAGE_NONE][]['target_id'] = $new_credit_nid;
+			node_save($task_node);
+
+			//alert user of success
+			$commands[]=ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div class="task-credit-complete">Credit Updated!</div>');
+			return array(
+				'#type' => 'ajax',
+				'#commands' => $commands,
+			);
+
 		} else {
 			drupal_set_message(t('Unable to set a reference to this credit on the task.'), 'error');
 			watchdog('ec_task_credits', 'Error: field_task_credits is not set on the task node');
