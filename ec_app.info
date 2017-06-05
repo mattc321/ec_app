@@ -9,6 +9,8 @@ files[] = views/handlers/ec_app_handler_field_display_all_services.inc
 files[] = views/handlers/ec_app_handler_filter_by_assignee.inc
 files[] = views/handlers/ec_app_handler_filter_by_service.inc
 
+stylesheets[all][] = css/animate.css
+
 dependencies[] = entityreference
 dependencies[] = field_collection
 dependencies[] = field_collection_table

@@ -17,3 +17,15 @@
 .credit-right textarea {
     margin-top: -10px;
 }
+
+.task-credit-complete {
+    float: right;
+    clear: both;
+    color: #3c763d;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+    border-radius: 2px 2px;
+    /* border: 1px solid #94d894; */
+    padding: 5px;
+    /* color: #0a5225; */
+}
