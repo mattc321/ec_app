@@ -5,10 +5,16 @@
  *
  **/
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
+
 	if ($node->type == 'ol_todo') {
+		//this module will only work if the proper todo_list field is present
 		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'])) {
+			//add css and js
 			$path = drupal_get_path('module', 'ec_task_credits');
 			drupal_add_css ("$path/css/task_credits.css");
+
+			$jspath = drupal_get_path('module', 'ec_task_credits');
+			drupal_add_js ("$jspath/js/ec_task_credits.js");
 
 			$output = theme('vocab_list', array(
 				'task_nid' => $node->nid,
@@ -221,7 +227,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 			//alert user of success
 			$commands[]=ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div class="bounceInDown animated task-credit-complete">Credit Updated!</div>');
-			$commands[] = ajax_command_invoke(NULL, "ajaxSuccessClear", array('#task-credit-ajax-response-'.$tid,'','',''));
+			$commands[] = ajax_command_invoke(NULL, "ajaxSuccessClear", array('#task-credit-ajax-response-'.$tid,'',''));
 			return array(
 				'#type' => 'ajax',
 				'#commands' => $commands,
