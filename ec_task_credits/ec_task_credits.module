@@ -25,6 +25,7 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 			$node->content['vocab_list_container'] = array(
 				'#markup' => $output,
 			);
+
 		}
 
 	}
@@ -128,6 +129,28 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	}
 }
 
+/**
+ * Check to see if a task credit exists referencing that tid for that nid
+ * @param $task_nid
+ * @param $term_id
+ * @return mixed
+ */
+function check_credit($task_nid, $term_id) {
+
+	$sql = "SELECT field_task_credit_term_reference_value term_id, tr.entity_id task_credit_nid FROM {field_data_field_task_credits} tc ";
+	$sql .= "join {field_data_field_task_credit_term_reference} tr on tr.entity_id = tc.field_task_credits_target_id ";
+	$sql .= "where tc.entity_id = ".$task_nid;
+	$sql .= " and field_task_credit_term_reference_value = ".$term_id;
+
+	$query = db_query($sql);
+	$result = $query->fetchAll();
+
+	if (isset($result[0])) {
+		return $result;
+	} else {
+		return null;
+	}
+}
 
 function ec_task_credits_credit_form_validate($form, &$form_state) {
 	//form_set_error('', t('Force this error for now'));
@@ -138,26 +161,43 @@ function ec_task_credits_credit_form_submit($form, &$form_state) {
 }
 
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
+	//the task nid is also in $form_state['build_info']['args'][2]);
+	if (!empty($term_id) && !empty($task_node)) {
 
-	if (!empty($term_id)) {
+		//check to see if any of these terms have already been referenced
+		$credit_exists = check_credit($task_node, $term_id);
+		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
+
+		$default_comment = (!empty($credit_exists)) ? $task_credit_node->body[LANGUAGE_NONE][0]['value'] : null;
+		$default_image_fid = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid'] : null;
+
+		//begin form
 		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
 		$form['#base'] = 'ec_task_credits_credit_form';
-
-		$form['term_field'] = array(
+		//if the credit exists already this value will trigger an update rather than a new new
+		$form_state['credit_exists'] = (!empty($credit_exists)) ? true: false;
+ 		$form['term_field'] = array(
 			'#markup' => $term_name,
 			'#tid' => $term_id,
 		);
+		//image display here
+//		$form['image_display'] = array(
+//			'#markup' => $term_name,
+//			'#tid' => $term_id,
+//		);
 
 		$form['browse_credit'] = array(
 			'#type' => 'managed_file',
 			'#title' => t('Block image'),
 			'#size' => 40,
 			'#id' => 'browse_credit_'.$term_id,
+			'#default_value' => $default_image_fid,
 			'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
 			'#upload_location' => 'public://'
 		);
 		$form['comment_credit'] = array(
 			'#type' => 'textarea',
+			'#default_value' => $default_comment,
 			'#id' => 'comment_credit_'.$term_id,
 			'#title' => t('Comment'),
 			'#attributes' => array(
@@ -195,13 +235,29 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
  * @return string
  */
 function ec_task_credits_form_ajax_submit($form, &$form_state) {
-
+dpm($form_state);
+	//upload and handle images
 	if(!empty($form_state['build_info']['args'])) {
+		if (isset($form_state['values']['browse_credit'])) {
+			if ($form_state['values']['browse_credit'] == 0){
+				dpm('File was zero');
+			} else {
+				dpm('File was not zero');
+				$file = file_load($form_state['values']['browse_credit']);
+				$file->status = FILE_STATUS_PERMANENT;
+				file_save($file);
+				dpm($file);
+			}
+
+		}
+
 
 		global $user;
 
 		$tid = $form_state['build_info']['args'][0];
-		$body= $form_state['build_info']['args'][1];
+		//term value $form_state['build_info']['args'][1];
+		$body = $form_state['values']['comment_credit'];
+		$image = $form_state['values']['browse_credit'];
 		$task_nid = $form_state['build_info']['args'][2];
 
 		$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
@@ -214,8 +270,11 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			'poster' => $user->uid,
 		);
 
-		//create a new task credit node
+		//create a new task credit node if its new
 		$new_credit_nid = ec_task_credits_add_new_node($node_info);
+
+		//update an existing task credit if its not new
+
 
 		//load the task node and reference to the new credit node from above
 		$task_node = node_load($task_nid);
@@ -226,8 +285,8 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			node_save($task_node);
 
 			//alert user of success
-			$commands[]=ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div class="bounceInDown animated task-credit-complete">Credit Updated!</div>');
-			$commands[] = ajax_command_invoke(NULL, "ajaxSuccessClear", array('#task-credit-ajax-response-'.$tid,'',''));
+			$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
+			$commands[] = ajax_command_invoke(NULL, 'creditSuccessAnimation', array($tid, 'argument2'));
 			return array(
 				'#type' => 'ajax',
 				'#commands' => $commands,
