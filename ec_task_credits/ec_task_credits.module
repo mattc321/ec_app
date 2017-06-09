@@ -167,6 +167,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		//check to see if any of these terms have already been referenced
 		$credit_exists = check_credit($task_node, $term_id);
 		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
+		$task_credit_image = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid']: null;
 		$task_credit_nid = (!empty($credit_exists)) ? $credit_exists[0]->task_credit_nid: null;
 		$default_comment = (!empty($credit_exists)) ? $task_credit_node->body[LANGUAGE_NONE][0]['value'] : null;
 		$default_image_fid = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid'] : null;
@@ -181,19 +182,35 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 			'#markup' => $term_name,
 			'#tid' => $term_id,
 		);
-		//image display here
-//		$form['image_display'] = array(
-//			'#markup' => $term_name,
-//			'#tid' => $term_id,
-//		);
+
+		//if it exists and theres an image, then add it to the form
+		if (!empty($task_credit_image)) {
+			$file = file_load($task_credit_image);
+			$image = image_load($file->uri);
+			$content = array(
+				'file' => array(
+					'#theme' => 'image_style',
+					'#style_name' => 'medium',
+					'#path' => $image->source,
+					'#width' => $image->info['width'],
+					'#height' => $image->info['height'],
+				),
+			);
+			$form['image_display'] = array(
+				'#markup' => drupal_render($content),
+				'#prefix' => '<div class="credit-image-display">',
+				'#suffix' => '</div>',
+				'#tid' => $term_id,
+			);
+			drupal_render($content);
+
+		}
 
 		$form['browse_credit'] = array(
 			'#type' => 'managed_file',
-			'#title' => t('Block image'),
 			'#size' => 40,
 			'#id' => 'browse_credit_'.$term_id,
 			'#default_value' => $default_image_fid,
-			'#description' => t("Image should be less than 400 pixels wide and in JPG format."),
 			'#upload_location' => 'public://'
 		);
 		$form['comment_credit'] = array(
@@ -255,8 +272,9 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 		global $user;
 
+		//if the credit existed first then update it. If not, make it new.
 		if ($form_state['credit_exists'] == true) {
-			dpm('task exists building array to submit to updater');
+
 			$tid = $form_state['build_info']['args'][0];
 			//term value $form_state['build_info']['args'][1];
 			$body = $form_state['values']['comment_credit'];
@@ -279,8 +297,8 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			//update an existing task credit if its not new
 			$new_credit_nid = ec_task_credits_update_credit_node($node_info);
 		} else {
+
 			$tid = $form_state['build_info']['args'][0];
-			//term value $form_state['build_info']['args'][1];
 			$body = $form_state['values']['comment_credit'];
 			$image = $form_state['values']['browse_credit'];
 			$task_nid = $form_state['build_info']['args'][2];
@@ -292,6 +310,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 				'task_nid' => $task_nid,
 				'tid' => $tid,
 				'body' => $body,
+				'image' => $image,
 				'poster' => $user->uid,
 			);
 
@@ -301,28 +320,27 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 
 
-
-
 		//load the task node and reference to the new credit node from above
 		$task_node = node_load($task_nid);
 
 		//if theres a ref field, populate with the nid you just made
-		if (isset($task_node->field_task_credits)) {
+		if (isset($task_node->field_task_credits) && $form_state['credit_exists'] != true) {
 			$task_node->field_task_credits[LANGUAGE_NONE][]['target_id'] = $new_credit_nid;
 			node_save($task_node);
 
-			//alert user of success
-			$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
-			$commands[] = ajax_command_invoke(NULL, 'creditSuccessAnimation', array($tid, 'argument2'));
-			return array(
-				'#type' => 'ajax',
-				'#commands' => $commands,
-			);
-
-		} else {
-			drupal_set_message(t('Unable to set a reference to this credit on the task.'), 'error');
-			watchdog('ec_task_credits', 'Error: field_task_credits is not set on the task node');
 		}
+
+		$file = file_load($form_state['values']['browse_credit']);
+		$uri = $file->uri;
+		$url = file_create_url($uri);
+		dpm($url);
+		//alert user of success
+		$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
+		$commands[] = ajax_command_invoke(NULL, 'creditSuccessAnimation', array($tid, 'argument2'));
+		return array(
+			'#type' => 'ajax',
+			'#commands' => $commands,
+		);
 
 
 	} else {
@@ -363,7 +381,6 @@ function ec_task_credits_forms($form_id, $args) {
 	);
 	$forms = array();
 	foreach ($dynamic_forms as $dynform) {
-//		dpm($dynform);
 		if (strpos($form_id, $dynform) === 0) { // === is important! see doc on strpos
 			$forms[$form_id] = array(
 				'callback' => $dynform,
@@ -403,8 +420,6 @@ function ec_task_credits_add_new_node($node_info){
 	$new_credit->path['pathauto'] = 1;
 	$new_credit->field_task_credit_term_reference[LANGUAGE_NONE][0]['value'] = $node_info['tid'];
 
-
-
 	node_submit($new_credit);
 	node_save($new_credit);
 	return $new_credit->nid;
@@ -413,19 +428,16 @@ function ec_task_credits_add_new_node($node_info){
 }
 
 /**
- * Custom function that creates a new task credit node
- * @return The node id of the newly submitted task credit
+ * Custom function that updates a credit node
+ * @return The node id of the updated task credit
  */
 function ec_task_credits_update_credit_node($node_info){
 
-	dpm($node_info);
 	$update_credit = node_load($node_info['credit_nid']);
-	dpm($update_credit);
 	$update_credit->title = $node_info['title'];
 	$update_credit->body[LANGUAGE_NONE][0]['value'] = $node_info['body'];
 	$update_credit->uid = $node_info['poster'];
 	$update_credit->field_task_credit_image[LANGUAGE_NONE][0]['fid'] = $node_info['image'];
-
 
 	node_save($update_credit);
 	return $update_credit->nid;
