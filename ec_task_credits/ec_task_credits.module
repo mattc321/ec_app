@@ -215,7 +215,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 					'#height' => $image->info['height'],
 				),
 			);
-			dpm($content);
+
 			$form['image_display'] = array(
 				'#markup' => drupal_render($content),
 				'#prefix' => '<div class="credit-image-display"><a href="'.$large_image.'" rel="lightbox[credits]['.$default_comment.']">',
@@ -271,14 +271,11 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 	if(!empty($form_state['build_info']['args'])) {
 		if (isset($form_state['values']['browse_credit'])) {
 			if ($form_state['values']['browse_credit'] == 0){
-				dpm('File was zero');
 				//http://www.zyxware.com/articles/5042/solved-how-to-use-managed-file-for-uploading-private-files-with-its-deletion-in-drupal-7
 			} else {
-				dpm('File was not zero');
 				$file = file_load($form_state['values']['browse_credit']);
 				$file->status = FILE_STATUS_PERMANENT;
 				file_save($file);
-				dpm($file);
 			}
 
 		}
