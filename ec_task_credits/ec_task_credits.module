@@ -175,6 +175,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		//begin form
 		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
 		$form['#base'] = 'ec_task_credits_credit_form';
+		$form['#attributes']['class'][] = 'ec-task-credits-credit-form-class';
 		//if the credit exists already this value will trigger an update rather than a new new
 		$form_state['credit_exists'] = (!empty($credit_exists)) ? true: false;
 		$form_state['credit_nid'] = (!empty($credit_exists)) ? $task_credit_nid: null;
@@ -218,6 +219,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 			'#default_value' => $default_comment,
 			'#id' => 'comment_credit_'.$term_id,
 			'#title' => t('Comment'),
+			'#resizable' => false,
 			'#attributes' => array(
 				'placeholder' => t('Comment'),
 			),
