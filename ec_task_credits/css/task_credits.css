@@ -1,23 +1,15 @@
-.credit-list-container {
-    display: table;
-    border-collapse: separate;
-    border-spacing: 5px 10px;
-    border-padding: 5px;
-}
-.credit-row {
-    display: table-row;
-    box-shadow: -2px 5px 6px rgba(233, 233, 233, 0.55);
-    /* border-left: 10px solid black; */
-    /* margin: 5px; */
-    /* padding: 5px; */
-}
-.credit-cell {
-    display: table-cell;
-}
-.credit-right textarea {
-    margin-top: -10px;
-}
 
+.credit-list-container {
+    /* display: inline-block; */
+    /* border-collapse: separate; */
+    /* border-spacing: 5px 10px; */
+    /*border-padding: 5px;*/
+    /*margin-left: 25%;*/
+    /*width: 40%;*/
+}
+.credit-list-container h2 {
+    text-align: center;
+}
 .task-credit-complete {
     float: right;
     clear: both;
@@ -28,4 +20,48 @@
     /* border: 1px solid #94d894; */
     padding: 5px;
     /* color: #0a5225; */
+}
+.form-item-comment-credit textarea {
+
+}
+.credit-form-row:hover {
+    box-shadow: 1px 4px 10px #d4d4d4;
+    transform: scale(1.01);
+    color: black;
+}
+
+.credit-form-row {
+    margin: 15px;
+    box-shadow: 3px 3px 10px rgba(229, 229, 229, 0.69);
+    padding: 15px 5px;
+    -webkit-transition: .7s;
+    -moz-transition: .7s;
+    -ms-transition: .7s;
+    -o-transition: .7s;
+    transition: .5s;
+}
+.credit-image-display {
+    margin-left: 20px;
+    margin-bottom: 7px;
+}
+.credit-image-display img {
+    border-radius: 3px 3px;
+    border: 2px solid #575757;
+}
+.form-item-comment-credit textarea {
+    width: 260px !important;
+    height: 60px !important;
+    margin-left: 20px;
+}
+.form-item-browse-credit {
+    width: 260px;
+    margin-left: 20px;
+}
+.term-body {
+    margin-left: 20px;
+    margin-bottom: 5px;
+    /* padding-top: 10px; */
+}
+.submit-credit-btn {
+    margin-left: 20px;
 }

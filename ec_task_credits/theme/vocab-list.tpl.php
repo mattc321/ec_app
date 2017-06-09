@@ -6,7 +6,14 @@
 *   and elements
 **/
 ?>
-<h1>Vocab List</h1>
+
 <div class="credit-list-container">
-    <?php print render($test_form);?>
+    <h2 class="credit-header">
+        Credits
+    </h2>
+    <?php foreach ($test_form as $item => $form): ?>
+        <div class="credit-form-row">
+            <?php print render($form);?>
+        </div>
+    <?php endforeach; ?>
 </div>

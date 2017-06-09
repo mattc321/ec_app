@@ -25,7 +25,9 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 			$node->content['vocab_list_container'] = array(
 				'#markup' => $output,
 			);
-
+			$node->content['wtf'] = array(
+				'#markup' => 'WHAT THE HECK',
+			);
 		}
 
 	}
@@ -179,9 +181,25 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		//if the credit exists already this value will trigger an update rather than a new new
 		$form_state['credit_exists'] = (!empty($credit_exists)) ? true: false;
 		$form_state['credit_nid'] = (!empty($credit_exists)) ? $task_credit_nid: null;
+
+		//list the term body
  		$form['term_field'] = array(
 			'#markup' => $term_name,
+			'#prefix' => '<div class="term-body">',
+			'#suffix' => '</div>',
 			'#tid' => $term_id,
+		);
+
+
+		$form['comment_credit'] = array(
+			'#type' => 'textarea',
+			'#default_value' => $default_comment,
+			'#id' => 'comment_credit_'.$term_id,
+			'#title' => t('Comment'),
+			'#resizable' => false,
+			'#attributes' => array(
+				'placeholder' => t('Comment'),
+			),
 		);
 
 		//if it exists and theres an image, then add it to the form
@@ -203,8 +221,6 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 				'#suffix' => '</div>',
 				'#tid' => $term_id,
 			);
-			drupal_render($content);
-
 		}
 
 		$form['browse_credit'] = array(
@@ -212,18 +228,11 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 			'#size' => 40,
 			'#id' => 'browse_credit_'.$term_id,
 			'#default_value' => $default_image_fid,
-			'#upload_location' => 'public://'
+			'#upload_location' => 'public://',
 		);
-		$form['comment_credit'] = array(
-			'#type' => 'textarea',
-			'#default_value' => $default_comment,
-			'#id' => 'comment_credit_'.$term_id,
-			'#title' => t('Comment'),
-			'#resizable' => false,
-			'#attributes' => array(
-				'placeholder' => t('Comment'),
-			),
-		);
+
+
+
 		//selector for ajax response to user
 		$form['ajax_response'] = array(
 			'#markup' => '<div id="task-credit-ajax-response-'.$term_id.'" class="hide-field"></div>',
@@ -233,6 +242,8 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 			'#id' => 'submit_credit_'.$term_id,
 			'#title' => t('Save'),
 			'#value' => t('Save'),
+			'#prefix' => '<div class="submit-credit-btn">',
+			'#suffix' => '</div>',
 			'#ajax' => array(
 				'callback' => 'ec_task_credits_form_ajax_submit',
 				'wrapper' => 'ec-task-credit-form-wrapper',
@@ -335,7 +346,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 		$file = file_load($form_state['values']['browse_credit']);
 		$uri = $file->uri;
 		$url = file_create_url($uri);
-		dpm($url);
+
 		//alert user of success
 		$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
 		$commands[] = ajax_command_invoke(NULL, 'creditSuccessAnimation', array($tid, 'argument2'));
@@ -350,18 +361,6 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 		watchdog('ec_task_credits', 'Arguments were not properly passed to the ajax submit function.');
 		return $form;
 	}
-
-//	if (!empty($form_state['input']['comment'])) {
-//		return 'Subscribed !';
-//	} else {
-//		return $form;
-//	}
-//	if (isset($form_state['values']['browse_credit'])) {
-//		$file = file_load($form_state['values']['custom_content_block_image']);
-//		$file->status = FILE_STATUS_PERMANENT;
-//		file_save($file);
-//	}
-//	return $form;
 }
 
 /*
