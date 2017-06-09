@@ -167,7 +167,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		//check to see if any of these terms have already been referenced
 		$credit_exists = check_credit($task_node, $term_id);
 		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
-
+		$task_credit_nid = (!empty($credit_exists)) ? $credit_exists[0]->task_credit_nid: null;
 		$default_comment = (!empty($credit_exists)) ? $task_credit_node->body[LANGUAGE_NONE][0]['value'] : null;
 		$default_image_fid = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid'] : null;
 
@@ -176,6 +176,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		$form['#base'] = 'ec_task_credits_credit_form';
 		//if the credit exists already this value will trigger an update rather than a new new
 		$form_state['credit_exists'] = (!empty($credit_exists)) ? true: false;
+		$form_state['credit_nid'] = (!empty($credit_exists)) ? $task_credit_nid: null;
  		$form['term_field'] = array(
 			'#markup' => $term_name,
 			'#tid' => $term_id,
@@ -235,12 +236,12 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
  * @return string
  */
 function ec_task_credits_form_ajax_submit($form, &$form_state) {
-dpm($form_state);
 	//upload and handle images
 	if(!empty($form_state['build_info']['args'])) {
 		if (isset($form_state['values']['browse_credit'])) {
 			if ($form_state['values']['browse_credit'] == 0){
 				dpm('File was zero');
+				//http://www.zyxware.com/articles/5042/solved-how-to-use-managed-file-for-uploading-private-files-with-its-deletion-in-drupal-7
 			} else {
 				dpm('File was not zero');
 				$file = file_load($form_state['values']['browse_credit']);
@@ -254,26 +255,52 @@ dpm($form_state);
 
 		global $user;
 
-		$tid = $form_state['build_info']['args'][0];
-		//term value $form_state['build_info']['args'][1];
-		$body = $form_state['values']['comment_credit'];
-		$image = $form_state['values']['browse_credit'];
-		$task_nid = $form_state['build_info']['args'][2];
+		if ($form_state['credit_exists'] == true) {
+			dpm('task exists building array to submit to updater');
+			$tid = $form_state['build_info']['args'][0];
+			//term value $form_state['build_info']['args'][1];
+			$body = $form_state['values']['comment_credit'];
+			$image = $form_state['values']['browse_credit'];
+			$task_nid = $form_state['build_info']['args'][2];
+			$credit_nid = $form_state['credit_nid'];
 
-		$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
+			$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
 
-		$node_info = array(
-			'title' => $title,
-			'task_nid' => $task_nid,
-			'tid' => $tid,
-			'body' => $body,
-			'poster' => $user->uid,
-		);
+			$node_info = array(
+				'title' => $title,
+				'task_nid' => $task_nid,
+				'image' => $image,
+				'tid' => $tid,
+				'body' => $body,
+				'credit_nid' => $credit_nid,
+				'poster' => $user->uid,
+			);
 
-		//create a new task credit node if its new
-		$new_credit_nid = ec_task_credits_add_new_node($node_info);
+			//update an existing task credit if its not new
+			$new_credit_nid = ec_task_credits_update_credit_node($node_info);
+		} else {
+			$tid = $form_state['build_info']['args'][0];
+			//term value $form_state['build_info']['args'][1];
+			$body = $form_state['values']['comment_credit'];
+			$image = $form_state['values']['browse_credit'];
+			$task_nid = $form_state['build_info']['args'][2];
 
-		//update an existing task credit if its not new
+			$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
+
+			$node_info = array(
+				'title' => $title,
+				'task_nid' => $task_nid,
+				'tid' => $tid,
+				'body' => $body,
+				'poster' => $user->uid,
+			);
+
+			//create a new task credit node if its new
+			$new_credit_nid = ec_task_credits_add_new_node($node_info);
+		}
+
+
+
 
 
 		//load the task node and reference to the new credit node from above
@@ -376,9 +403,32 @@ function ec_task_credits_add_new_node($node_info){
 	$new_credit->path['pathauto'] = 1;
 	$new_credit->field_task_credit_term_reference[LANGUAGE_NONE][0]['value'] = $node_info['tid'];
 
+
+
 	node_submit($new_credit);
 	node_save($new_credit);
 	return $new_credit->nid;
+
+	//watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
+}
+
+/**
+ * Custom function that creates a new task credit node
+ * @return The node id of the newly submitted task credit
+ */
+function ec_task_credits_update_credit_node($node_info){
+
+	dpm($node_info);
+	$update_credit = node_load($node_info['credit_nid']);
+	dpm($update_credit);
+	$update_credit->title = $node_info['title'];
+	$update_credit->body[LANGUAGE_NONE][0]['value'] = $node_info['body'];
+	$update_credit->uid = $node_info['poster'];
+	$update_credit->field_task_credit_image[LANGUAGE_NONE][0]['fid'] = $node_info['image'];
+
+
+	node_save($update_credit);
+	return $update_credit->nid;
 
 	//watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
 }
