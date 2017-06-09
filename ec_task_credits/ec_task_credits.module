@@ -25,9 +25,6 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 			$node->content['vocab_list_container'] = array(
 				'#markup' => $output,
 			);
-			$node->content['wtf'] = array(
-				'#markup' => 'WHAT THE HECK',
-			);
 		}
 
 	}
@@ -178,6 +175,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		$form['#id'] = 'ec_task_credits_credit_form_'.$term_id;
 		$form['#base'] = 'ec_task_credits_credit_form';
 		$form['#attributes']['class'][] = 'ec-task-credits-credit-form-class';
+
 		//if the credit exists already this value will trigger an update rather than a new new
 		$form_state['credit_exists'] = (!empty($credit_exists)) ? true: false;
 		$form_state['credit_nid'] = (!empty($credit_exists)) ? $task_credit_nid: null;
@@ -206,6 +204,8 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		if (!empty($task_credit_image)) {
 			$file = file_load($task_credit_image);
 			$image = image_load($file->uri);
+			$large_image = image_style_url('large', $image->source);
+
 			$content = array(
 				'file' => array(
 					'#theme' => 'image_style',
@@ -215,10 +215,11 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 					'#height' => $image->info['height'],
 				),
 			);
+			dpm($content);
 			$form['image_display'] = array(
 				'#markup' => drupal_render($content),
-				'#prefix' => '<div class="credit-image-display">',
-				'#suffix' => '</div>',
+				'#prefix' => '<div class="credit-image-display"><a href="'.$large_image.'" rel="lightbox[credits]['.$default_comment.']">',
+				'#suffix' => '</a></div>',
 				'#tid' => $term_id,
 			);
 		}

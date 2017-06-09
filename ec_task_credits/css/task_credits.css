@@ -49,8 +49,8 @@
     border: 2px solid #575757;
 }
 .form-item-comment-credit textarea {
-    width: 260px !important;
-    height: 60px !important;
+    /*width: 260px !important;*/
+    /*height: 60px !important;*/
     margin-left: 20px;
 }
 .form-item-browse-credit {
