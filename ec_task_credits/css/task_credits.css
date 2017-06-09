@@ -65,3 +65,13 @@
 .submit-credit-btn {
     margin-left: 20px;
 }
+
+/*LIGHTBOX OVERIDES*/
+#imageData #imageDetails {
+    width: 85%;
+
+}
+#imageData #caption {
+    font-weight: normal;
+    font-size: 1.5em;
+}
