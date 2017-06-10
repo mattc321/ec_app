@@ -1,8 +1,12 @@
 <?php
-//https://www.alloymagnetic.com/blog/192/angular-2-boilerplate-setup-small-drupal-7-applications
+/*
+ * THIS FIELD HAS ALSO BEEN MANUALLY ADDED TO:
+ * profiles/openlucius/themes/openlucius/node--ol-todo.tpl
+ */
 
-/** Implements hook_node_view().
- *
+
+/**
+ *	Implements hook_node_view().
  **/
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
 
@@ -25,20 +29,19 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 			$node->content['vocab_list_container'] = array(
 				'#markup' => $output,
 			);
+
+
+		} else {
+			watchdog('ec_task_credits', 'The ec_task_credits module cannot run because the field field_todo_list_reference is not present.');
 		}
 
 	}
-//	if ($node->type == 'task_credit') {
-//		dpm($node);
-//	}
-
 }
 
-function ec_task_credits_preprocess_field(&$variables) {
 
-}
-
-//<-- ANGULAR PROJECT -------------------------------------------------------<
+/**
+ *	Implements hook_menu().
+ **/
 function ec_task_credits_menu() {
 	$items = [];
 	$items['angular2'] = [
@@ -49,11 +52,12 @@ function ec_task_credits_menu() {
 //		'access callback' => TRUE,
 //		'page callback' => 'ec_task_credits_test_form_callback',
 //	];
-
-
 	return $items;
 }
 
+/**
+ *	Angular menu callback.
+ **/
 function ec_task_credits_angular_callback() {
 	$build['content'] = [
 		'#theme' => [
@@ -63,6 +67,9 @@ function ec_task_credits_angular_callback() {
 	return $build;
 }
 
+/**
+ *	Implements hook_theme().
+ **/
 function ec_task_credits_theme($existing, $type, $theme, $path) {
 	return [
 		'angular_component' => [
@@ -110,18 +117,14 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 
 		}
 		//build the term fields
-		//for each term, create a $field and an accompanying browse control and textbox
-		//then put that array inside a $form array and return the whole thing to the template
-		$form = array();
+		//for each term, create a form dynamically
 		if (!empty($vars['terms'])) {
 			$i=0;
 			foreach ($vars['terms'] as $tid => $term){
 				//arguments go to $form_state['build_info']['args']
-				$vars['test_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name, $node->nid);
+				$vars['credit_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name, $node->nid);
 				$i++;
 			}
-			$vars['term_fields'] = $form;
-
 		}
 
 
@@ -151,14 +154,9 @@ function check_credit($task_nid, $term_id) {
 	}
 }
 
-function ec_task_credits_credit_form_validate($form, &$form_state) {
-	//form_set_error('', t('Force this error for now'));
-}
-
-function ec_task_credits_credit_form_submit($form, &$form_state) {
-
-}
-
+/**
+ *	Custom Credit form.
+ **/
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
 	//the task nid is also in $form_state['build_info']['args'][2]);
 	if (!empty($term_id) && !empty($task_node)) {
@@ -254,7 +252,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 		);
 
 	} else {
-		$form['None_found'] = array(
+		$form['none_found'] = array(
 			'#markup' => 'No vocab was found',
 		);
 	}
@@ -280,9 +278,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 		}
 
-
 		global $user;
-
 		//if the credit existed first then update it. If not, make it new.
 		if ($form_state['credit_exists'] == true) {
 
@@ -329,8 +325,6 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			$new_credit_nid = ec_task_credits_add_new_node($node_info);
 		}
 
-
-
 		//load the task node and reference to the new credit node from above
 		$task_node = node_load($task_nid);
 
@@ -352,7 +346,6 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			'#type' => 'ajax',
 			'#commands' => $commands,
 		);
-
 
 	} else {
 		drupal_set_message('Arguments were not passed to the ajax submit function');
@@ -391,6 +384,9 @@ function ec_task_credits_forms($form_id, $args) {
 	return $forms;
 }
 
+/**
+ *	Implements hook_form_alter().
+ **/
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
 	if ($form_id == 'ol_todo_node_form') {
 		if(isset($form['field_task_credits'])) {
