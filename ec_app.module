@@ -44,9 +44,9 @@ function ec_app_field_widget_form_alter(&$element, &$form_state, $context) {
  * Custom function to lookup a subcontractor node and update its
  * grade with a calculated average
  * 
- * @params $subcontractor pass the node id of the subcontractor
- * @params $grade the grade for the current nid being saved in the form of tid
- * @params $nid the nid being saved
+ * @param $subcontractor pass the node id of the subcontractor
+ * @param $grade the grade for the current nid being saved in the form of tid
+ * @param $nid the nid being saved
  */
 function ec_app_update_grade($subcontractor, $grade, $nid) {
 
@@ -2118,6 +2118,11 @@ function ec_app_node_update($node) {
 }
 
 function ec_app_views_query_alter(&$view, &$query) {
+
+	if ($view->name == 'nodes_autocomplete') {
+//		dpm($view);
+	}
+
 	// (Example assuming a view with an exposed filter on node title.)
 	// If the input for the title filter is a positive integer, filter against
 	// node ID instead of node title.

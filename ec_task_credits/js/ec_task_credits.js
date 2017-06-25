@@ -21,20 +21,27 @@
 		$.fn.creditSuccessAnimation = function($term_id, $argument2) {
 			if ($('.task-credit-complete').length > 0) {
 				$('.task-credit-complete').delay(2500).queue(function(){
-					console.log('add class');
 					$('.task-credit-complete').addClass("fadeOutDown");
 					//$('#ajax-credit-replace-' + $term_id).delay(1000).replaceWith('<div id="task-credit-ajax-response-' + $term_id + '" class="hide-field"></div>');
 					$('.task-credit-complete').dequeue();
 				});
 
 				$('.task-credit-complete').delay(3500).queue(function(){
-					console.log('replace it');
 					$('#ajax-credit-replace-' + $term_id).replaceWith('<div id="task-credit-ajax-response-' + $term_id + '" class="hide-field"></div>');
 					$('.task-credit-complete').dequeue();
 				});
 
 			}
 		};
+
+
+		if ($('.remove-image-js').length > 0) {
+			$('.remove-image-js').click(function() {
+				console.log('poo it');
+				//console.log(this.attribute('data'));
+				//console.log(this.attr('data'));
+			});
+		}
 
     }
   };
