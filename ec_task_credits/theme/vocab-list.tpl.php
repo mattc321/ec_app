@@ -11,6 +11,7 @@
     <h2 class="credit-header">
         Credits
     </h2>
+    <?php print render($download_all);?>
     <?php foreach ($credit_form as $item => $form): ?>
         <div class="credit-form-row">
             <?php print render($form);?>

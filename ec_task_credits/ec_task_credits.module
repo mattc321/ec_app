@@ -30,7 +30,6 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 				'#markup' => $output,
 			);
 
-
 		} else {
 			watchdog('ec_task_credits', 'The ec_task_credits module cannot run because the field field_todo_list_reference is not present.');
 		}
@@ -48,11 +47,173 @@ function ec_task_credits_menu() {
 		'access callback' => TRUE,
 		'page callback' => 'ec_task_credits_angular_callback',
 	];
-//	$items['test_credit_form'] = [
-//		'access callback' => TRUE,
-//		'page callback' => 'ec_task_credits_test_form_callback',
-//	];
+	$items['download/task-credits/%'] = [
+		'page callback' => 'ec_task_credits_download_images',
+		'type' => MENU_CALLBACK,
+		'page arguments' => array(2), //the node of the task (ol_todo)
+		'access arguments' => array('access content'),
+		'delivery callback' => 'ec_task_credits_download_images_ajax',
+	];
 	return $items;
+}
+
+/**
+ *	Download Task Credits menu callback.
+ **/
+function ec_task_credits_download_images($task_nid) {
+	if (!empty($task_nid)) {
+		$task = node_load($task_nid);
+		$file_path = "public://images/".$task_nid;
+
+		//if the file path exists, build an array of images from it.
+		if (file_prepare_directory($file_path)) {
+			$file_array = array();
+			$file_array['file_path'] = $file_path;
+			$png = file_scan_directory($file_path, '/.*.png$/i');
+			$jpg = file_scan_directory($file_path, '/.*.jpg$/i');
+			$bmp = file_scan_directory($file_path, '/.*.bmp$/i');
+
+			$file_array[0] = array_merge($png, $jpg, $bmp);
+			$url_array = array();
+
+			foreach ($file_array[0] as $key => $uri) {
+				array_push($url_array, file_create_url($key));
+			}
+			$file_path_url = file_create_url($file_path);
+//			dpm($file_path_url.'/download.zip');
+//			zipFilesAndDownload($url_array,'download.zip',$file_path_url);
+			direct_download();
+			print '</br>';
+			$string = getcwd();
+
+		} else {
+			$string = 'file path does not exist';
+		}
+//		if (!empty($task->field_task_credits[LANGUAGE_NONE])) {
+//			//if its not empty then we know there are images
+//		}
+	} else {
+		$string = 'No task node id was given. Images could not be found';
+	}
+	return $string;
+}
+
+/**
+ *	Download Task Credits ajax delivery callback.
+ **/
+function ec_task_credits_download_images_ajax($response) {
+	//dpm($response);
+//	print '<pre>';
+print_r($response);
+//	print '</pre>';
+}
+function direct_download()
+{
+
+//		$App = new DHR_Application();
+		$file_name='test';
+		$txt_name=$file_name.".txt";
+		$txt_path="sites/default/files/images/29523/".$file_name.".txt";
+		$arc_name="sites/default/files/images/29523/video.png";
+
+//
+//		$txt='this is some test content';
+//		$file=fopen($txt_path,"w+");
+//		fwrite($file,$txt);
+//
+//		$zip = new ZipArchive();
+//		$full_file_path = DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR . 'default'. DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . '29523' . DIRECTORY_SEPARATOR . $file_name;
+//		if ($zip->open($arc_name, ZIPARCHIVE::CREATE )!==TRUE)
+//		{
+//			exit("cannot open <$arc_name>\n");
+//		}
+////		$nameAtt1 = pathinfo($App->Att1,PATHINFO_BASENAME);
+//		print $txt_path;
+//		$zip->addFile($full_file_path,'newname.txt');
+//
+////		if (($App->Att2 != '') && ($App->Att2 != null))
+////		{
+////			$nameAtt2 = pathinfo($App->Att2,PATHINFO_BASENAME);
+////			$zip->addFile($App->Att2,$nameAtt2);
+////		}
+//
+////		$zip->addFile($txt_name,$txt_path);
+//		$zip->close();
+//		fclose($file);
+	$filen = 'img.png';
+	$dir = "sites/default/files/images/29523/"; // trailing slash is important
+	$file = $dir . $filen;
+	header('Content-Description: File Transfer');
+	header('Content-Type: application/octet-stream');
+	header('Content-Disposition: attachment; filename='.basename($file));
+	header('Expires: 0');
+	header('Cache-Control: must-revalidate');
+	header('Pragma: public');
+	header('Content-Length: ' . filesize($file));
+	ob_clean();
+	flush();
+	readfile($file);
+	exit;
+//		header("Content-type: image/png");
+//		header("Content-Disposition: attachment; filename=$arc_name");
+//		header("Pragma: no-cache");
+//		header("Expire: 0");
+//		readfile("$arc_name");
+//		exit();
+
+}
+function downloadAllImages() {
+	$zip = new ZipArchive;
+	$res = $zip->open('test.zip', ZipArchive::CREATE);
+	$file_name="test.txt";
+	print $full_file_path = DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'www'. DIRECTORY_SEPARATOR . 'ecteam.net' . DIRECTORY_SEPARATOR . 'sites' .  DIRECTORY_SEPARATOR . 'default' . DIRECTORY_SEPARATOR . 'files' .  DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . '29523' . DIRECTORY_SEPARATOR . $file_name;
+	if ($res === TRUE) {
+		$zip->addFromString('test.txt', 'file content goes here');
+		$zip->close();
+		echo 'ok';
+	} else {
+		echo 'failed';
+	}
+}
+
+function zipFilesAndDownload($file_names,$archive_file_name,$file_path) {
+	$zip = new ZipArchive();
+	//create the file and throw the error if unsuccessful
+	if ($zip->open($file_path.'/'.$archive_file_name, ZIPARCHIVE::CREATE )!==TRUE) {
+		exit("cannot open <$archive_file_name>\n");
+	}
+
+	$newFileName = '/var/www/ecteam.net/sites/default/files/images/29523/test.txt';
+
+	if ( ! is_writable(dirname($newFileName))) {
+
+		echo dirname($newFileName) . ' must writable!!!';
+	} else {
+		fopen("/var/www/ecteam.net/sites/default/files/images/29523/test2.zip", "w");
+		// blah blah blah
+	}
+	//add each files of $file_name array to archive
+	foreach($file_names as $files) {
+		if(!empty($files)) {
+			$file=str_replace($file_path.'/',"",$files);
+//			print $file;
+//			print '</br>';
+			$zip->addFile($files, $file);
+		}
+	}
+	$zip->close();
+	echo $file_path.'/'.$archive_file_name;
+}
+
+
+
+if($_GET['documents']) {
+	$documents=explode(",",$_GET['documents']);
+
+	$file_names=$documents;
+	$archive_file_name='zipped-'.time().'.zip';
+	$file_path=$_SERVER['DOCUMENT_ROOT'].'/';
+	zipFilesAndDownload($file_names,$archive_file_name,$file_path);
 }
 
 /**
@@ -93,7 +254,13 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	// build a form send it to the template file
 	$task_list = node_load($vars['task_list_nid']);
 	$node = node_load($vars['task_nid']);
+	global $base_url;
+	//create link to download all images
+	$vars['download_all'] = '<h3><a href="'.$base_url.'/download/task-credits/'.$vars['task_nid'].'">Download all images</a></h3>';
+//	dpm($node);
 
+
+	//build vocab credit list
 	if ($task_list->title == 'Site Visits') {
 		switch($node->title) {
 			case 'Insulation':
@@ -160,7 +327,6 @@ function check_credit($task_nid, $term_id) {
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
 	//the task nid is also in $form_state['build_info']['args'][2]);
 	if (!empty($term_id) && !empty($task_node)) {
-
 		//check to see if any of these terms have already been referenced
 		$credit_exists = check_credit($task_node, $term_id);
 		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
@@ -230,7 +396,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 			'#tid' => $term_id,
 			'#id' => 'browse_credit_'.$term_id,
 			'#default_value' => $default_image_fid,
-			'#upload_location' => 'public://',
+			'#upload_location' => 'public://images/'.$task_node,
 			'#process' => array('file_managed_file_process', 'ec_task_credits_file_managed_file_process'),
 		);
 
@@ -301,7 +467,7 @@ function ec_task_credits_ajax_remove_submit($form, &$form_state) {
  * @return string
  */
 function ec_task_credits_form_ajax_submit($form, &$form_state) {
-	
+
 	//upload and handle images
 	if(!empty($form_state['build_info']['args'])) {
 		if (isset($form_state['values']['browse_credit'])) {
@@ -434,7 +600,7 @@ function ec_task_credits_forms($form_id, $args) {
  *	Implements hook_form_alter().
  **/
 function ec_task_credits_form_alter(&$form, &$form_state, $form_id) {
-	if ($form_id == 'projects_node_form') {
+	if ($form_id == 'ol_todo_node_form') {
 		if(isset($form['field_task_credits'])) {
 			//$form['field_task_credits']['#attributes']['class'][] = 'hide-field';
 		}
