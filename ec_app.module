@@ -165,6 +165,7 @@ function ec_app_views_api() {
  *   The computer name of parent content type referencing the nid.
  * @param String $fieldname
  *   The name of the task reference field
+ * @return project node id
  */
 function ec_app_ec_return_project($taskid, $nodetype, $fieldname) {
 	// $taskid = the nid of a task

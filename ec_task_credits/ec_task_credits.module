@@ -56,14 +56,22 @@ function ec_task_credits_menu() {
 	];
 	return $items;
 }
+function clean($string) {
+	$string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
 
+	return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
+}
 /**
  *	Download Task Credits menu callback.
  **/
 function ec_task_credits_download_images($task_nid) {
 	if (!empty($task_nid)) {
 		$task = node_load($task_nid);
-		$file_path = "public://images/".$task_nid;
+		$project_nid = ec_app_ec_return_project($task_nid, 'projects', 'field_project_tasks');
+		$project = node_load($project_nid);
+		$project_title = $project->title;
+		print drupal_get_path_alias('node/'.$project_nid);
+		$file_path = "sites/default/files/images/".$task_nid;
 
 		//if the file path exists, build an array of images from it.
 		if (file_prepare_directory($file_path)) {
@@ -76,26 +84,22 @@ function ec_task_credits_download_images($task_nid) {
 			$file_array[0] = array_merge($png, $jpg, $bmp);
 			$url_array = array();
 
-			//for each image download it directly
 			foreach ($file_array[0] as $key => $uri) {
-				//$key = the full path to the public download
-//				print $key;
 				array_push($url_array, file_create_url($key));
-//				direct_download($key, $uri->filename);
-
 			}
 //			downloadAllImages();
-			$files_to_zip = array(
-				0 => array(
-					'file_path' => 'sites/default/files/images/29523/img.png',
-					'file_name' => 'img.png'),
-				1 => array(
-					'file_path' => 'sites/default/files/images/29523/video.png',
-					'file_name' => 'video.png',
-				),
-			);
+//			$files_to_zip = array(
+//				0 => array(
+//					'file_path' => 'sites/default/files/images/29523/img.png',
+//					'file_name' => 'img.png'),
+//				1 => array(
+//					'file_path' => 'sites/default/files/images/29523/video.png',
+//					'file_name' => 'video.png',
+//				),
+//			);
 //if true, good; if false, zip creation failed
-			$result = create_zip($files_to_zip,'sites/default/files/images/29523/my-archive.zip', TRUE);
+			$result = create_zip($file_array,'sites/default/files/images/29523/my-archive.zip');
+
 			$string="done";
 		} else {
 			watchdog('ec_task_credits', 'Error in downloading images. There is no sites/default/images folder. Also, images should be saved inside of
@@ -170,7 +174,7 @@ function downloadAllImages() {
 }
 
 /* creates a compressed zip file */
-function create_zip($files = array(),$destination = '',$overwrite = false) {
+function create_zip($files = array(),$destination = '') {
 
 	$valid_files = array();
 	foreach($files as $file) {
@@ -187,8 +191,10 @@ function create_zip($files = array(),$destination = '',$overwrite = false) {
 
 		//if the zip file already exists, then overwrite it, else create it
 		if(is_file($destination)) {
+			print '</br> OVERWROTE IT </br>';
 			$zip->open($destination, ZIPARCHIVE::OVERWRITE);
 		} else {
+			print '</br> CREATE IT </br>';
 			$zip->open($destination, ZIPARCHIVE::CREATE);
 		}
 
@@ -197,13 +203,8 @@ function create_zip($files = array(),$destination = '',$overwrite = false) {
 			print '</br>'.'adding file to zip '. $file['file_name'].'</br>';
 			$zip->addFile($file['file_path'],$file['file_name']);
 		}
-		//debug
-		//echo 'The zip archive contains ',$zip->numFiles,' files with a status of ',$zip->status;
-
-		//close the zip -- done!
 		$zip->close();
 
-		//check to make sure the file exists
 		return file_exists($destination);
 	} else {
 		return false;
