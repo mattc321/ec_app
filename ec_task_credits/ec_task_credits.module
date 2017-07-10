@@ -76,22 +76,32 @@ function ec_task_credits_download_images($task_nid) {
 			$file_array[0] = array_merge($png, $jpg, $bmp);
 			$url_array = array();
 
+			//for each image download it directly
 			foreach ($file_array[0] as $key => $uri) {
+				//$key = the full path to the public download
+//				print $key;
 				array_push($url_array, file_create_url($key));
-			}
-			$file_path_url = file_create_url($file_path);
-//			dpm($file_path_url.'/download.zip');
-//			zipFilesAndDownload($url_array,'download.zip',$file_path_url);
-			direct_download();
-			print '</br>';
-			$string = getcwd();
+//				direct_download($key, $uri->filename);
 
+			}
+//			downloadAllImages();
+			$files_to_zip = array(
+				0 => array(
+					'file_path' => 'sites/default/files/images/29523/img.png',
+					'file_name' => 'img.png'),
+				1 => array(
+					'file_path' => 'sites/default/files/images/29523/video.png',
+					'file_name' => 'video.png',
+				),
+			);
+//if true, good; if false, zip creation failed
+			$result = create_zip($files_to_zip,'sites/default/files/images/29523/my-archive.zip', TRUE);
+			$string="done";
 		} else {
+			watchdog('ec_task_credits', 'Error in downloading images. There is no sites/default/images folder. Also, images should be saved inside of
+			a folder of their respective task node id. This is done with the file paths module. Example: sites/default/images/29523/image.png');
 			$string = 'file path does not exist';
 		}
-//		if (!empty($task->field_task_credits[LANGUAGE_NONE])) {
-//			//if its not empty then we know there are images
-//		}
 	} else {
 		$string = 'No task node id was given. Images could not be found';
 	}
@@ -107,72 +117,96 @@ function ec_task_credits_download_images_ajax($response) {
 print_r($response);
 //	print '</pre>';
 }
-function direct_download()
-{
+function direct_download($filepath, $filename) {
 
-//		$App = new DHR_Application();
-		$file_name='test';
-		$txt_name=$file_name.".txt";
-		$txt_path="sites/default/files/images/29523/".$file_name.".txt";
-		$arc_name="sites/default/files/images/29523/video.png";
+	$file = $filepath;
 
-//
-//		$txt='this is some test content';
-//		$file=fopen($txt_path,"w+");
-//		fwrite($file,$txt);
-//
-//		$zip = new ZipArchive();
-//		$full_file_path = DIRECTORY_SEPARATOR . 'sites' . DIRECTORY_SEPARATOR . 'default'. DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . '29523' . DIRECTORY_SEPARATOR . $file_name;
-//		if ($zip->open($arc_name, ZIPARCHIVE::CREATE )!==TRUE)
-//		{
-//			exit("cannot open <$arc_name>\n");
-//		}
-////		$nameAtt1 = pathinfo($App->Att1,PATHINFO_BASENAME);
-//		print $txt_path;
-//		$zip->addFile($full_file_path,'newname.txt');
-//
-////		if (($App->Att2 != '') && ($App->Att2 != null))
-////		{
-////			$nameAtt2 = pathinfo($App->Att2,PATHINFO_BASENAME);
-////			$zip->addFile($App->Att2,$nameAtt2);
-////		}
-//
-////		$zip->addFile($txt_name,$txt_path);
-//		$zip->close();
-//		fclose($file);
-	$filen = 'img.png';
-	$dir = "sites/default/files/images/29523/"; // trailing slash is important
-	$file = $dir . $filen;
 	header('Content-Description: File Transfer');
 	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename='.basename($file));
+	header('Content-Disposition: attachment; filename='.basename($filename));
 	header('Expires: 0');
 	header('Cache-Control: must-revalidate');
 	header('Pragma: public');
 	header('Content-Length: ' . filesize($file));
+	set_time_limit(0);
 	ob_clean();
 	flush();
 	readfile($file);
-	exit;
-//		header("Content-type: image/png");
-//		header("Content-Disposition: attachment; filename=$arc_name");
-//		header("Pragma: no-cache");
-//		header("Expire: 0");
-//		readfile("$arc_name");
-//		exit();
+	print $filename;
+	return true;
 
 }
 function downloadAllImages() {
-	$zip = new ZipArchive;
-	$res = $zip->open('test.zip', ZipArchive::CREATE);
-	$file_name="test.txt";
-	print $full_file_path = DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'www'. DIRECTORY_SEPARATOR . 'ecteam.net' . DIRECTORY_SEPARATOR . 'sites' .  DIRECTORY_SEPARATOR . 'default' . DIRECTORY_SEPARATOR . 'files' .  DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . '29523' . DIRECTORY_SEPARATOR . $file_name;
-	if ($res === TRUE) {
-		$zip->addFromString('test.txt', 'file content goes here');
+	$files = array(
+		'public://images/29523/img.png',
+		'public://images/29523/video.png'
+	);
+	print_r($files);
+	print "test";
+
+	$destination = 'sites/default/files/images/29523/my.zip';
+	$z = new ZipArchive();
+	$z->open('sites/default/files/images/29523/my.zip',ZIPARCHIVE::CREATE);
+	$z->addFile('sites/default/files/images/29523/video.png', 'video.png');
+	$z->close();
+
+//	if($z->open($destination,$overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true) {
+//		return false;
+//	}
+//	//add the files
+//	foreach($files as $file) {
+//		$z->addFile($file,$file);
+//	}
+
+//	$zipname = 'logs.zip';
+//	$zip = new ZipArchive;
+//	$zip->open('sites/default/images/29523/my.zip', ZipArchive::CREATE);
+//	foreach ($files as $file) {
+//		$zip->addFile($file);
+//	}
+//	$zip->close();
+//	return true;
+
+}
+
+/* creates a compressed zip file */
+function create_zip($files = array(),$destination = '',$overwrite = false) {
+
+	$valid_files = array();
+	foreach($files as $file) {
+		//make sure the file exists
+		if(file_exists($file['file_path'])) {
+			$valid_files[] = $file;
+		}
+	}
+
+	//if we have good files...
+	if(count($valid_files)) {
+		//create the archive
+		$zip = new ZipArchive();
+
+		//if the zip file already exists, then overwrite it, else create it
+		if(is_file($destination)) {
+			$zip->open($destination, ZIPARCHIVE::OVERWRITE);
+		} else {
+			$zip->open($destination, ZIPARCHIVE::CREATE);
+		}
+
+		//add the files
+		foreach($valid_files as $file) {
+			print '</br>'.'adding file to zip '. $file['file_name'].'</br>';
+			$zip->addFile($file['file_path'],$file['file_name']);
+		}
+		//debug
+		//echo 'The zip archive contains ',$zip->numFiles,' files with a status of ',$zip->status;
+
+		//close the zip -- done!
 		$zip->close();
-		echo 'ok';
+
+		//check to make sure the file exists
+		return file_exists($destination);
 	} else {
-		echo 'failed';
+		return false;
 	}
 }
 
