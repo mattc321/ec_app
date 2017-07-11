@@ -25,7 +25,7 @@
 					$('.task-credit-complete').dequeue();
 				});
 
-				$('.task-credit-complete').delay(3500).queue(function(){
+				$('.task-credit-complete').delay(2000).queue(function(){
 					$('#ajax-credit-replace-' + $term_id).replaceWith('<div id="task-credit-ajax-response-' + $term_id + '" class="hide-field"></div>');
 					$('.task-credit-complete').dequeue();
 				});
@@ -35,11 +35,15 @@
 
 
 		$('#download-images-btn').click(function() {
-			console.log('ran');
+			$(this).html('Preparing Download');
 			var taskNid = $(this).data('id');
 			var myAjax = "/download/task-credits/" + taskNid;
-			console.log(myAjax);
-			$("#download-zip-target").load(myAjax);
+
+			$(this).delay(3500).queue(function(){
+				$("#download-zip-target").load(myAjax);
+			});
+
+
 		});
 
 		if ($('.remove-image-js').length > 0) {

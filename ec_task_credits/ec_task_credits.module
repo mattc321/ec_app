@@ -64,6 +64,7 @@ function clean($string) {
  *	Download Task Credits menu callback.
  **/
 function ec_task_credits_download_images($task_nid) {
+
 	if (!empty($task_nid)) {
 		$task = node_load($task_nid);
 		$project_nid = ec_app_ec_return_project($task_nid, 'projects', 'field_project_tasks');
@@ -94,10 +95,9 @@ function ec_task_credits_download_images($task_nid) {
 
 			$result = create_zip($url_array,$file_path.'/'.$archive_name);
 			if ($result) {
-				$string = $file_path.'/'.$archive_name;
-				direct_download($file_path.'/'.$archive_name,$archive_name);
+				$string = '<div class="animated fadeInDown"><a class="zip-link" href="/'.$file_path.'/'.$archive_name.'">'.$archive_name.'</a></div>';
 			} else {
-				$string = 'Result was false';
+				$string = 'Could not create zip file';
 			}
 			return $string;
 		} else {
@@ -115,30 +115,26 @@ function ec_task_credits_download_images($task_nid) {
  *	Download Task Credits ajax delivery callback.
  **/
 function ec_task_credits_download_images_ajax($response) {
-	//dpm($response);
-//	print '<pre>';
+	//print the ajax response in div in jquery
 	print $response;
-//	drupal_render($response);
-//	print '</pre>';
 }
-function direct_download($filepath, $filename) {
+function direct_download() {
 
-	$file = $filepath;
+	$filepath = '/var/www/ecteam.net/sites/default/files/images/29523/';
+	$filename = '694-Timberlake-Dr-Insulation.zip';
 
-	header('Content-Description: File Transfer');
-	header('Content-Type: application/octet-stream');
-	header('Content-Disposition: attachment; filename='.basename($filename));
-	header('Expires: 0');
-	header('Cache-Control: must-revalidate');
-	header('Pragma: public');
-	header('Content-Length: ' . filesize($file));
-	set_time_limit(0);
-	ob_clean();
-	flush();
-	readfile($file);
-	print $filename;
+	header("Pragma: public");
+	header("Expires: 0");
+	header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+	header("Cache-Control: public");
+	header("Content-Description: File Transfer");
+	header("Content-type: application/octet-stream");
+	header("Content-Disposition: attachment; filename=\"".$filename."\"");
+	header("Content-Transfer-Encoding: binary");
+	header("Content-Length: ".filesize($filepath.$filename));
+	ob_end_flush();
+	@readfile($filepath.$filename);
 	return true;
-
 }
 
 
@@ -217,13 +213,11 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	$task_list = node_load($vars['task_list_nid']);
 	$node = node_load($vars['task_nid']);
 	global $base_url;
+
 	//create link to download all images
-//	$vars['download_all'] = '<h3><a id="download-images-cont" href="'.$base_url.'/download/task-credits/'.$vars['task_nid'].'">Download all images</a></h3>';
-	$vars['download_all'] = '<button id="download-images-btn" class="btn" data-id="'.$vars['task_nid'].'">Download all images</button>';
+	//corresponds with jquery ajax.load in js file
+	$vars['download_all'] = '<div id="download-images-btn" class="buttonDownload" data-id="'.$vars['task_nid'].'" description="Download all images for this task">Download Images</div>';
 	$vars['download_all'].= '<div id="download-zip-target"></div>';
-//	dpm($node);
-
-
 	//build vocab credit list
 	if ($task_list->title == 'Site Visits') {
 		switch($node->title) {
