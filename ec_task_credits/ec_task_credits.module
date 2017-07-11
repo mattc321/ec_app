@@ -58,7 +58,6 @@ function ec_task_credits_menu() {
 }
 function clean($string) {
 	$string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-
 	return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
 }
 /**
@@ -69,38 +68,38 @@ function ec_task_credits_download_images($task_nid) {
 		$task = node_load($task_nid);
 		$project_nid = ec_app_ec_return_project($task_nid, 'projects', 'field_project_tasks');
 		$project = node_load($project_nid);
-		$project_title = $project->title;
-		print drupal_get_path_alias('node/'.$project_nid);
+		$project_title = clean($project->title);
+		$task_title = clean($task->title);
+		$archive_name=$project_title.'-'.$task_title.'.zip';
 		$file_path = "sites/default/files/images/".$task_nid;
 
 		//if the file path exists, build an array of images from it.
 		if (file_prepare_directory($file_path)) {
 			$file_array = array();
-			$file_array['file_path'] = $file_path;
 			$png = file_scan_directory($file_path, '/.*.png$/i');
 			$jpg = file_scan_directory($file_path, '/.*.jpg$/i');
 			$bmp = file_scan_directory($file_path, '/.*.bmp$/i');
 
 			$file_array[0] = array_merge($png, $jpg, $bmp);
+
 			$url_array = array();
-
+			$url_array['file_path'] = $file_path;
 			foreach ($file_array[0] as $key => $uri) {
-				array_push($url_array, file_create_url($key));
+//				print_r($uri);
+				array_push($url_array, array(
+					'file_path' => $uri->uri,
+					'file_name' => $uri->filename)
+				);
 			}
-//			downloadAllImages();
-//			$files_to_zip = array(
-//				0 => array(
-//					'file_path' => 'sites/default/files/images/29523/img.png',
-//					'file_name' => 'img.png'),
-//				1 => array(
-//					'file_path' => 'sites/default/files/images/29523/video.png',
-//					'file_name' => 'video.png',
-//				),
-//			);
-//if true, good; if false, zip creation failed
-			$result = create_zip($file_array,'sites/default/files/images/29523/my-archive.zip');
 
-			$string="done";
+			$result = create_zip($url_array,$file_path.'/'.$archive_name);
+			if ($result) {
+				$string = $file_path.'/'.$archive_name;
+				direct_download($file_path.'/'.$archive_name,$archive_name);
+			} else {
+				$string = 'Result was false';
+			}
+			return $string;
 		} else {
 			watchdog('ec_task_credits', 'Error in downloading images. There is no sites/default/images folder. Also, images should be saved inside of
 			a folder of their respective task node id. This is done with the file paths module. Example: sites/default/images/29523/image.png');
@@ -118,7 +117,8 @@ function ec_task_credits_download_images($task_nid) {
 function ec_task_credits_download_images_ajax($response) {
 	//dpm($response);
 //	print '<pre>';
-print_r($response);
+	print $response;
+//	drupal_render($response);
 //	print '</pre>';
 }
 function direct_download($filepath, $filename) {
@@ -140,38 +140,7 @@ function direct_download($filepath, $filename) {
 	return true;
 
 }
-function downloadAllImages() {
-	$files = array(
-		'public://images/29523/img.png',
-		'public://images/29523/video.png'
-	);
-	print_r($files);
-	print "test";
 
-	$destination = 'sites/default/files/images/29523/my.zip';
-	$z = new ZipArchive();
-	$z->open('sites/default/files/images/29523/my.zip',ZIPARCHIVE::CREATE);
-	$z->addFile('sites/default/files/images/29523/video.png', 'video.png');
-	$z->close();
-
-//	if($z->open($destination,$overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true) {
-//		return false;
-//	}
-//	//add the files
-//	foreach($files as $file) {
-//		$z->addFile($file,$file);
-//	}
-
-//	$zipname = 'logs.zip';
-//	$zip = new ZipArchive;
-//	$zip->open('sites/default/images/29523/my.zip', ZipArchive::CREATE);
-//	foreach ($files as $file) {
-//		$zip->addFile($file);
-//	}
-//	$zip->close();
-//	return true;
-
-}
 
 /* creates a compressed zip file */
 function create_zip($files = array(),$destination = '') {
@@ -191,16 +160,13 @@ function create_zip($files = array(),$destination = '') {
 
 		//if the zip file already exists, then overwrite it, else create it
 		if(is_file($destination)) {
-			print '</br> OVERWROTE IT </br>';
 			$zip->open($destination, ZIPARCHIVE::OVERWRITE);
 		} else {
-			print '</br> CREATE IT </br>';
 			$zip->open($destination, ZIPARCHIVE::CREATE);
 		}
 
 		//add the files
 		foreach($valid_files as $file) {
-			print '</br>'.'adding file to zip '. $file['file_name'].'</br>';
 			$zip->addFile($file['file_path'],$file['file_name']);
 		}
 		$zip->close();
@@ -211,45 +177,6 @@ function create_zip($files = array(),$destination = '') {
 	}
 }
 
-function zipFilesAndDownload($file_names,$archive_file_name,$file_path) {
-	$zip = new ZipArchive();
-	//create the file and throw the error if unsuccessful
-	if ($zip->open($file_path.'/'.$archive_file_name, ZIPARCHIVE::CREATE )!==TRUE) {
-		exit("cannot open <$archive_file_name>\n");
-	}
-
-	$newFileName = '/var/www/ecteam.net/sites/default/files/images/29523/test.txt';
-
-	if ( ! is_writable(dirname($newFileName))) {
-
-		echo dirname($newFileName) . ' must writable!!!';
-	} else {
-		fopen("/var/www/ecteam.net/sites/default/files/images/29523/test2.zip", "w");
-		// blah blah blah
-	}
-	//add each files of $file_name array to archive
-	foreach($file_names as $files) {
-		if(!empty($files)) {
-			$file=str_replace($file_path.'/',"",$files);
-//			print $file;
-//			print '</br>';
-			$zip->addFile($files, $file);
-		}
-	}
-	$zip->close();
-	echo $file_path.'/'.$archive_file_name;
-}
-
-
-
-if($_GET['documents']) {
-	$documents=explode(",",$_GET['documents']);
-
-	$file_names=$documents;
-	$archive_file_name='zipped-'.time().'.zip';
-	$file_path=$_SERVER['DOCUMENT_ROOT'].'/';
-	zipFilesAndDownload($file_names,$archive_file_name,$file_path);
-}
 
 /**
  *	Angular menu callback.
@@ -291,7 +218,9 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	$node = node_load($vars['task_nid']);
 	global $base_url;
 	//create link to download all images
-	$vars['download_all'] = '<h3><a href="'.$base_url.'/download/task-credits/'.$vars['task_nid'].'">Download all images</a></h3>';
+//	$vars['download_all'] = '<h3><a id="download-images-cont" href="'.$base_url.'/download/task-credits/'.$vars['task_nid'].'">Download all images</a></h3>';
+	$vars['download_all'] = '<button id="download-images-btn" class="btn" data-id="'.$vars['task_nid'].'">Download all images</button>';
+	$vars['download_all'].= '<div id="download-zip-target"></div>';
 //	dpm($node);
 
 

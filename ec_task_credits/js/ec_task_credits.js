@@ -12,7 +12,6 @@
 			console.log('EC Take Credits Module loaded');
 		});
 
-
 		/**Called in ec_task_credits.module during the ajax success
 		* First the html is replaced by ajax. Then this function is
 		* called, which adds a fadeOut and then completely removes the html by
@@ -34,6 +33,14 @@
 			}
 		};
 
+
+		$('#download-images-btn').click(function() {
+			console.log('ran');
+			var taskNid = $(this).data('id');
+			var myAjax = "/download/task-credits/" + taskNid;
+			console.log(myAjax);
+			$("#download-zip-target").load(myAjax);
+		});
 
 		if ($('.remove-image-js').length > 0) {
 			$('.remove-image-js').click(function() {
