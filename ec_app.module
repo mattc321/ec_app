@@ -2167,9 +2167,16 @@ function ec_app_field_attach_form($entity_type, $entity, &$form, &$form_state, $
 					'#options' => drupal_map_assoc(range(0, 50)),
 					'#default_value' => 2,
 				);
+
+				//also add drop down for unit type
+				$form[$field['field_name']]['add_more_unit_types'] = array(
+					'#type' => 'select',
+					'#title' => t('Unit type'),
+					'#options' => get_unit_types(),
+				);
+
 				$form[$field['field_name']]['und']['add_more']['#submit'][] = 'ec_app_field_add_more_submit';
 				$form[$field['field_name']]['und']['add_more']['#value'] = 'Add more rows';
-//				dpm($form[$field['field_name']]);
 			}
 		}
 	}
@@ -2187,10 +2194,28 @@ function ec_app_field_add_more_submit($form, &$form_state){
 	$field_state = field_form_get_state($parents, $field_name, $langcode, $form_state);
 	//get the number from the select
 	$numbtoadd = $form[$field_name]['add_more_number']['#value'];
-	watchdog('ec_app', 'HEYO! @nb', array('@nb' =>$numbtoadd));
+
 	if($numbtoadd){
 		$field_state['items_count'] += $numbtoadd;
 		field_form_set_state($parents, $field_name, $langcode, $form_state, $field_state);
 		$form_state['rebuild'] = TRUE;
 	}
+}
+
+//function to get all terms from the unit types vocab
+function get_unit_types() {
+	$vocabulary = taxonomy_vocabulary_machine_name_load('unit_type');
+	if (!$vocabulary) {
+		drupal_set_message('Sorry the vocabulary called unit_type was not found. Could not load dropdown');
+		watchdog('ec_app','The vocabulary called unit_type was not found. Could not load dropdown on fc add more');
+		return false;
+	}
+	$terms = entity_load('taxonomy_term', FALSE, array('vid' => $vocabulary->vid));
+
+	$options = array();
+	foreach ($terms as $term) {
+		$options[$term->tid] = $term->name;
+	}
+
+	return $options;
 }
