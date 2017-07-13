@@ -16,6 +16,10 @@
 function ec_app_field_widget_form_alter(&$element, &$form_state, $context) {
  // dpm($context['instance']['widget']['type']);
   //imagefield_crop_widget
+
+	if ($element['#bundle'] == 'field_units' || $element['value']['#bundle'] == 'field_units') {
+//		dpm($element);
+	}
   if ($context['field']['type'] == 'image' && $context['instance']['widget']['type'] == 'image_image' && !empty($context['instance']['settings']['alt_field'])) {
 	foreach (element_children($element) as $delta) {
       $element[$delta]['#process'][] = 'mymodule_field_widget_process';
@@ -2129,4 +2133,64 @@ function ec_app_views_query_alter(&$view, &$query) {
 	// node ID instead of node title.
 
 
+}
+/**
+ * Implements hook_field_attach_form()
+ */
+
+function ec_app_field_attach_form($entity_type, $entity, &$form, &$form_state, $langcode){
+	$options = array('language' => field_valid_language($langcode));
+	// Merge default options.
+	$default_options = array(
+		'default' => FALSE,
+		'deleted' => FALSE,
+		'language' => NULL,
+	);
+	$options += $default_options;
+	list(, , $bundle) = entity_extract_ids($entity_type, $entity);
+	$instances = _field_invoke_get_instances($entity_type, $bundle, $options);
+	// Iterate through the instances.
+	$return = array();
+	foreach ($instances as $instance) {
+		// field_info_field() is not available for deleted fields, so use
+		// field_info_field_by_id().
+		$field = field_info_field_by_id($instance['field_id']);
+		$field_name = $field['field_name'];
+		//If we are looking at our field type and specific widget type, and we are multiple entries
+		if($field['cardinality'] == FIELD_CARDINALITY_UNLIMITED){
+			//Check just in case the button is here, and add another #submit function
+			if(isset($form[$field['field_name']]['und']['add_more']) && $form[$field['field_name']]['und']['add_more']['#name'] == 'field_units_add_more'){
+				// add a simple select list, this defaults to numb 3
+				$form[$field['field_name']]['add_more_number'] = array(
+					'#type' => 'select',
+					'#title' => t('Add more no.'),
+					'#options' => drupal_map_assoc(range(0, 50)),
+					'#default_value' => 2,
+				);
+				$form[$field['field_name']]['und']['add_more']['#submit'][] = 'ec_app_field_add_more_submit';
+				$form[$field['field_name']]['und']['add_more']['#value'] = 'Add more rows';
+//				dpm($form[$field['field_name']]);
+			}
+		}
+	}
+}
+
+function ec_app_field_add_more_submit($form, &$form_state){
+
+	$button = $form_state['triggering_element'];
+	// Go one level up in the form, to the widgets container.
+	$element = drupal_array_get_nested_value($form, array_slice($button['#array_parents'], 0, -1));
+	$field_name = $element['#field_name'];
+	$langcode = $element['#language'];
+	$parents = $element['#field_parents'];
+	// Alter the number of widgets to show. items_count = 0 means 1.
+	$field_state = field_form_get_state($parents, $field_name, $langcode, $form_state);
+	//get the number from the select
+	$numbtoadd = $form[$field_name]['add_more_number']['#value'];
+	watchdog('ec_app', 'HEYO! @nb', array('@nb' =>$numbtoadd));
+	if($numbtoadd){
+		$field_state['items_count'] += $numbtoadd;
+		field_form_set_state($parents, $field_name, $langcode, $form_state, $field_state);
+		$form_state['rebuild'] = TRUE;
+	}
 }

@@ -95,7 +95,7 @@ function ec_task_credits_download_images($task_nid) {
 
 			$result = create_zip($url_array,$file_path.'/'.$archive_name);
 			if ($result) {
-				$string = '<div class="animated fadeInDown"><a class="zip-link" href="/'.$file_path.'/'.$archive_name.'">'.$archive_name.'</a></div>';
+				$string = '<div class="animated fadeInLeft"><a class="zip-link" href="/'.$file_path.'/'.$archive_name.'">'.$archive_name.'</a></div>';
 			} else {
 				$string = 'Could not create zip file';
 			}
