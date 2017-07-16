@@ -30,10 +30,23 @@ function ec_task_credits_node_view($node, $view_mode, $langcode) {
 				'#markup' => $output,
 			);
 
+
+			if (isset($_GET['delete_blanks']) && $_GET['delete_blanks'] == 'yes') {
+				if (!empty($node->field_task_credits[LANGUAGE_NONE])) {
+					foreach ($node->field_task_credits[LANGUAGE_NONE] as $key => $value) {
+						if (!node_exists($value['target_id'])) {
+							unset($node->field_task_credits['und'][$key]);
+						}
+					}
+					node_save($node);
+				}
+
+			}
+
+
 		} else {
 			watchdog('ec_task_credits', 'The ec_task_credits module cannot run because the field field_todo_list_reference is not present.');
 		}
-
 	}
 }
 
@@ -234,7 +247,9 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 				break;
 
 			case 'Final + Blower Door':
-				$vars['terms'] = '';
+				$vocab_blower = taxonomy_vocabulary_machine_name_load('credit_list_framing');
+				$terms_blower = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_blower->vid));
+				$vars['terms'] = $terms_blower;
 				break;
 			default:
 				 $vars['terms'] = '';
@@ -263,6 +278,9 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
  * @return mixed
  */
 function check_credit($task_nid, $term_id) {
+	watchdog('ec_task_credits','Fn check_credit. 2 params passed
+				task_nid = @tnid
+				term_id = @termid', array('@tnid' => $task_nid, '@termid' => $term_id));
 
 	$sql = "SELECT field_task_credit_term_reference_value term_id, tr.entity_id task_credit_nid FROM {field_data_field_task_credits} tc ";
 	$sql .= "join {field_data_field_task_credit_term_reference} tr on tr.entity_id = tc.field_task_credits_target_id ";
@@ -287,6 +305,7 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 	if (!empty($term_id) && !empty($task_node)) {
 		//check to see if any of these terms have already been referenced
 		$credit_exists = check_credit($task_node, $term_id);
+		watchdog('ec_task_credits','Fn building form. Just ran check_credit. Return value is: @cc', array('@cc' => $credit_exists));
 		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
 		$task_credit_image = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid']: null;
 		$task_credit_nid = (!empty($credit_exists)) ? $credit_exists[0]->task_credit_nid: null;
@@ -385,6 +404,11 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 	return $form;
 }
 
+function ec_task_credits_credit_form_submit($form, $form_state) {
+	watchdog('ec_task_credits','Fn form submit - set rebuild form true');
+	$form_state['rebuild'] = TRUE;
+}
+
 function ec_task_credits_file_managed_file_process($element) {
 	//add attributes to launch camera app on iphone
 	$element['upload']['#attributes']['accept'] = 'image/*';
@@ -395,18 +419,14 @@ function ec_task_credits_file_managed_file_process($element) {
 //I was going to add some ajax commands to the remove button. But doing this broke the remove functionality
 //add submit handler for when the "remove" button is clicked
 //	$element['remove_button']['#submit'][] = 'ec_task_credits_ajax_remove_submit';
-//	$element['remove_button']['#ajax'] = array(
-//		'callback' => 'ec_task_credits_ajax_remove_submit',
-//		'wrapper' => 'ec_task_credits_ajax_remove_wrapper',
-//		'method' => 'replace',
-//		'effect' => 'fade',
-//	);
 	return $element;
 }
 
 function ec_task_credits_ajax_remove_submit($form, &$form_state) {
 //remove button clicked ajax
 //	//arg 0 is the term id
+//	dpm($form_state);
+
 //	if (isset($form_state['build_info']['args'][0])) {
 //		$tid = $form_state['build_info']['args'][0];
 //		$commands[] = ajax_command_replace('#image-display-'.$tid,'<div class="credit-image-display" id="image-display-'.$tid.'"></div>');
@@ -441,8 +461,13 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 		global $user;
 		//if the credit existed first then update it. If not, make it new.
-		if ($form_state['credit_exists'] == true) {
+		$credit_exists = check_credit($form_state['build_info']['args'][2], $form_state['build_info']['args'][0]);
+		watchdog('ec_task_credits', 'Fn ajax submit - running new check_credit on submit instead of form rebuild.
+					The response was: @response', array('@response' => $credit_exists));
 
+		if (!empty($credit_exists)) {
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit The credit DOES already exist');
+			dpm($form_state);
 			$tid = $form_state['build_info']['args'][0];
 			//term value $form_state['build_info']['args'][1];
 			$body = $form_state['values']['comment_credit'];
@@ -461,11 +486,11 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 				'credit_nid' => $credit_nid,
 				'poster' => $user->uid,
 			);
-
+			dpm($node_info);
 			//update an existing task credit if its not new
 			$new_credit_nid = ec_task_credits_update_credit_node($node_info);
 		} else {
-
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit The credit does NOT already exist');
 			$tid = $form_state['build_info']['args'][0];
 			$body = $form_state['values']['comment_credit'];
 			$image = $form_state['values']['browse_credit'];
@@ -488,16 +513,19 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 		//load the task node and reference to the new credit node from above
 		$task_node = node_load($task_nid);
+		watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Loading the task node no matter what');
 
-		//if theres a ref field, populate with the nid you just made
+		//if theres a ref field, populate with the nid you just made. Do not add entity reference is credit_exists was true
 		if (isset($task_node->field_task_credits) && $form_state['credit_exists'] != true) {
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Adding a new entity reference to field_task_credits
+			because credit_exists was false. Real val is: @cred', array('@cred' => $form_state['credit_exists']));
 			$task_node->field_task_credits[LANGUAGE_NONE][]['target_id'] = $new_credit_nid;
 			node_save($task_node);
-
 		}
 
 		//display the image if one was uploaded
 		if (!empty($form_state['values']['browse_credit']) && $form_state['values']['browse_credit'] != 0){
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Display the image. IF browse_credit is not empty && != 0');
 			$file = file_load($form_state['values']['browse_credit']);
 			$uri = $file->uri;
 			$url = file_create_url($uri);
@@ -505,9 +533,11 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			$commands[] = ajax_command_before('#browse_credit_'.$tid.'-ajax-wrapper','<div id=ajax-credit-image-'.$tid.' class="fadeIn animated credit-image-display"><img src="'.$url.'" width="220px"></div>');
 		} elseif ($form_state['values']['browse_credit'] == 0 && isset($form_state['complete form']['image_display'])) {
 			//ajax command to remove the image display if remove is clicked and saved
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Display the image. IF browse_credit == 0 && isset image_display??');
 			$commands[] = ajax_command_replace('#image-display-'.$tid,'<div class="credit-image-display" id="image-display-'.$tid.'"></div>');
 			$commands[] = ajax_command_replace('#ajax-credit-image-'.$tid,'<div class="credit-image-display" id="image-display-'.$tid.'"></div>');
 		}
+
 
 		//alert user of success
 		$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
@@ -516,7 +546,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			'#type' => 'ajax',
 			'#commands' => $commands,
 		);
-
+		return $form;
 	} else {
 		drupal_set_message('Arguments were not passed to the ajax submit function');
 		watchdog('ec_task_credits', 'Arguments were not properly passed to the ajax submit function.');
@@ -599,13 +629,23 @@ function ec_task_credits_add_new_node($node_info){
 function ec_task_credits_update_credit_node($node_info){
 
 	$update_credit = node_load($node_info['credit_nid']);
-	$update_credit->title = $node_info['title'];
+//	$update_credit->title = $node_info['title']; dont update the title
 	$update_credit->body[LANGUAGE_NONE][0]['value'] = $node_info['body'];
-	$update_credit->uid = $node_info['poster'];
+//	$update_credit->uid = $node_info['poster']; dont update this. Maybe update the last updated user instead
 	$update_credit->field_task_credit_image[LANGUAGE_NONE][0]['fid'] = $node_info['image'];
 
 	node_save($update_credit);
+	watchdog('ec_task_credits','Fn ec_task_credits_update_credit_node saved and returned');
 	return $update_credit->nid;
 
 	//watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
+}
+
+function node_exists($node_id) {
+	$node = db_query('SELECT title FROM {node} WHERE nid = :nid', array(':nid' => $node_id))->fetchField();
+	if($node){
+		return true;
+	} else {
+		return false;
+	}
 }

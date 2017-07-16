@@ -11,14 +11,14 @@
  
 /**
  * For custom views fields
- * Implements hook_widget_form_alter().
+ * Implements hook_field_widget_form_alter().
  */
 function ec_app_field_widget_form_alter(&$element, &$form_state, $context) {
  // dpm($context['instance']['widget']['type']);
   //imagefield_crop_widget
 
 	if ($element['#bundle'] == 'field_units' || $element['value']['#bundle'] == 'field_units') {
-//		dpm($element);
+
 	}
   if ($context['field']['type'] == 'image' && $context['instance']['widget']['type'] == 'image_image' && !empty($context['instance']['settings']['alt_field'])) {
 	foreach (element_children($element) as $delta) {
@@ -2164,25 +2164,42 @@ function ec_app_field_attach_form($entity_type, $entity, &$form, &$form_state, $
 				$form[$field['field_name']]['add_more_number'] = array(
 					'#type' => 'select',
 					'#title' => t('Add more no.'),
-					'#options' => drupal_map_assoc(range(0, 50)),
+					'#options' => drupal_map_assoc(range(0, 10)),
 					'#default_value' => 2,
 				);
 
 				//also add drop down for unit type
 				$form[$field['field_name']]['add_more_unit_types'] = array(
 					'#type' => 'select',
-					'#title' => t('Unit type'),
+					'#title' => '',
 					'#options' => get_unit_types(),
 				);
+				$form[$field['field_name']]['add_more_unit_types']['#attributes']['class'][] = 'hide-field';
+//				dpm($form[$field['field_name']]);
+				//$form['field_units']['und'][0]['field_unit_types']['und']['#default_value'][0]
 
 				$form[$field['field_name']]['und']['add_more']['#submit'][] = 'ec_app_field_add_more_submit';
+//				$form[$field['field_name']]['und']['add_more']['#ajax']['callback'] = 'ec_app_field_add_more_ajax';
 				$form[$field['field_name']]['und']['add_more']['#value'] = 'Add more rows';
+//				dpm($form[$field['field_name']]['und']['add_more']);
 			}
 		}
 	}
 }
+function ec_app_field_add_more_ajax($form, $form_state) {
+//	$commands[] = ajax_command_replace('#task-credit-ajax-response-'.$tid,'<div id=ajax-credit-replace-'.$tid.' class="fadeInDown animated task-credit-complete">Credit Updated!</div>');
 
+
+	$commands[] = ajax_command_invoke(NULL, 'creditSuccessAnimation', array('test1', 'argument2'));
+	$commands[] = ajax_command_invoke(NULL, 'field_add_more_js', array($form, $form_state));
+	return array(
+		'#type' => 'ajax',
+		'#commands' => $commands,
+	);
+}
 function ec_app_field_add_more_submit($form, &$form_state){
+
+//	watchdog("ec_app", '<pre>' . print_r( $form_state['field']['#parents']['field_units']['und'][0]['#fields']['field_unit_types']['und']['instance']['default_value'][0]['tid'], true) . '</pre>');
 
 	$button = $form_state['triggering_element'];
 	// Go one level up in the form, to the widgets container.
@@ -2195,11 +2212,21 @@ function ec_app_field_add_more_submit($form, &$form_state){
 	//get the number from the select
 	$numbtoadd = $form[$field_name]['add_more_number']['#value'];
 
+	//trying to set the default value of dropdown field unit types. cannot get it working
+//	$tid = $form[$field_name]['add_more_unit_types']['#value'];
+//	foreach($form_state['field']['#parents']['field_units']['und'] as $key => $new_unit) {
+//		//watchdog("ec_app", '<pre>' . print_r( $key, true) . '</pre>');
+//		$new_unit['#fields']['field_unit_types']['und']['instance']['default_value'][0]['tid']=$tid;
+//		watchdog("ec_app", '<pre>' . print_r( $new_unit['#fields']['field_unit_types']['und']['instance']['default_value'][0]['tid'], true) . '</pre>');
+//		//$new_unit['#fields']['field_unit_types']['und']['instance']['default_value'][0]['tid']
+//	}
+
 	if($numbtoadd){
-		$field_state['items_count'] += $numbtoadd;
+		$field_state['items_count'] += $numbtoadd-1;
 		field_form_set_state($parents, $field_name, $langcode, $form_state, $field_state);
 		$form_state['rebuild'] = TRUE;
 	}
+
 }
 
 //function to get all terms from the unit types vocab

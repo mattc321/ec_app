@@ -53,6 +53,7 @@
 			});
 		});
 
+
 		if ($('.remove-image-js').length > 0) {
 			$('.remove-image-js').click(function() {
 				console.log('poo it');
