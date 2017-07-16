@@ -515,6 +515,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 		$task_node = node_load($task_nid);
 		watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Loading the task node no matter what');
 
+//		$credit_exists;
 		//if theres a ref field, populate with the nid you just made. Do not add entity reference is credit_exists was true
 		if (isset($task_node->field_task_credits) && $form_state['credit_exists'] != true) {
 			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Adding a new entity reference to field_task_credits
