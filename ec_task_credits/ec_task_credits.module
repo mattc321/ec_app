@@ -11,8 +11,12 @@
 function ec_task_credits_node_view($node, $view_mode, $langcode) {
 
 	if ($node->type == 'ol_todo') {
+
 		//this module will only work if the proper todo_list field is present
-		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'])) {
+		if (isset($node->field_todo_list_reference[LANGUAGE_NONE][0]['nid']) &&
+			$node->field_todo_list_reference[LANGUAGE_NONE][0]['nid'] == 5125) {
+			//node 5125 = "Site Visits" this should only work on site visits
+
 			//add css and js
 			$path = drupal_get_path('module', 'ec_task_credits');
 			drupal_add_css ("$path/css/task_credits.css");
@@ -227,22 +231,27 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	$node = node_load($vars['task_nid']);
 	global $base_url;
 
-	//create link to download all images
-	//corresponds with jquery ajax.load in js file
-	$vars['download_all'] = '<div id="download-images-btn" class="buttonDownload" data-id="'.$vars['task_nid'].'" description="Download all images for this task">Download Images</div>';
-	$vars['download_all'].= '<div id="download-zip-target"></div>';
-	//build vocab credit list
+	//build vocab credit list only if the tasks are of a type Site Visits
 	if ($task_list->title == 'Site Visits') {
 		switch($node->title) {
 			case 'Insulation':
+
+				$view = views_get_view('credit_list_selector');
+				$view->set_display('insulation');
+				$view->pre_execute();
+				$view->execute();
+				dpm($view->result);
+
 				$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
 				$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
+				dpm($terms_insulation);
 				$vars['terms'] = $terms_insulation;
 				break;
 
 			case 'Framing':
 				$vocab_framing = taxonomy_vocabulary_machine_name_load('credit_list_framing');
 				$terms_framing = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_framing->vid));
+				dpm($terms_framing);
 				$vars['terms'] = $terms_framing;
 				break;
 
@@ -267,6 +276,10 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 			}
 		}
 
+		//create link to download all images
+		//corresponds with jquery ajax.load in js file
+		$vars['download_all'] = '<div id="download-images-btn" class="buttonDownload" data-id="'.$vars['task_nid'].'" description="Download all images for this task">Download Images</div>';
+		$vars['download_all'].= '<div id="download-zip-target"></div>';
 
 	}
 }
@@ -405,6 +418,8 @@ function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, 
 }
 
 function ec_task_credits_credit_form_submit($form, $form_state) {
+//	dpm('normal submit');
+//	dpm($form_state['triggering_element']);
 	watchdog('ec_task_credits','Fn form submit - set rebuild form true');
 	$form_state['rebuild'] = TRUE;
 }
@@ -421,7 +436,11 @@ function ec_task_credits_file_managed_file_process($element) {
 //	$element['remove_button']['#submit'][] = 'ec_task_credits_ajax_remove_submit';
 	return $element;
 }
-
+function ec_task_credits_node_presave($node) {
+	if ($node->type=='task_credits') {
+//		dpm($node);
+	}
+}
 function ec_task_credits_ajax_remove_submit($form, &$form_state) {
 //remove button clicked ajax
 //	//arg 0 is the term id
@@ -450,6 +469,8 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 	if(!empty($form_state['build_info']['args'])) {
 		if (isset($form_state['values']['browse_credit'])) {
 			if ($form_state['values']['browse_credit'] == 0){
+//				dpm('i think this means you clicked remove');
+				//['input']['browse_credit']['upload']
 				//http://www.zyxware.com/articles/5042/solved-how-to-use-managed-file-for-uploading-private-files-with-its-deletion-in-drupal-7
 			} else {
 				$file = file_load($form_state['values']['browse_credit']);
@@ -467,13 +488,14 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 
 		if (!empty($credit_exists)) {
 			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit The credit DOES already exist');
-			dpm($form_state);
 			$tid = $form_state['build_info']['args'][0];
 			//term value $form_state['build_info']['args'][1];
 			$body = $form_state['values']['comment_credit'];
 			$image = $form_state['values']['browse_credit'];
 			$task_nid = $form_state['build_info']['args'][2];
-			$credit_nid = $form_state['credit_nid'];
+			//if the credit existed during form load, then $form_state['credit_nid'] will have the node id
+			//but if the credit was created after form load, we need to get the node id of it from here.
+			$credit_nid = (empty($form_state['credit_nid']) ? $credit_exists[0]->task_credit_nid : $form_state['credit_nid']);
 
 			$title = 'task credit '.date("Y-m-d").'-'.$task_nid.'-'.$tid;
 
@@ -486,7 +508,7 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 				'credit_nid' => $credit_nid,
 				'poster' => $user->uid,
 			);
-			dpm($node_info);
+
 			//update an existing task credit if its not new
 			$new_credit_nid = ec_task_credits_update_credit_node($node_info);
 		} else {
@@ -515,13 +537,13 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 		$task_node = node_load($task_nid);
 		watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Loading the task node no matter what');
 
-//		$credit_exists;
-		//if theres a ref field, populate with the nid you just made. Do not add entity reference is credit_exists was true
-		if (isset($task_node->field_task_credits) && $form_state['credit_exists'] != true) {
-			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Adding a new entity reference to field_task_credits
-			because credit_exists was false. Real val is: @cred', array('@cred' => $form_state['credit_exists']));
+		//if theres a ref field, and if not credit existed then populate with the
+		// nid you just made. Do not add entity reference is credit_exists was true
+		if (isset($task_node->field_task_credits) && empty($credit_exists)) {
 			$task_node->field_task_credits[LANGUAGE_NONE][]['target_id'] = $new_credit_nid;
 			node_save($task_node);
+			watchdog('ec_task_credits','Fn ec_task_credits_form_ajax_submit Adding a new entity reference to field_task_credits. Saved $node.
+			Credit_exists was empty. Real val is: @cred', array('@cred' => $credit_exists));
 		}
 
 		//display the image if one was uploaded
@@ -547,7 +569,6 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 			'#type' => 'ajax',
 			'#commands' => $commands,
 		);
-		return $form;
 	} else {
 		drupal_set_message('Arguments were not passed to the ajax submit function');
 		watchdog('ec_task_credits', 'Arguments were not properly passed to the ajax submit function.');
