@@ -232,6 +232,8 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 	global $base_url;
 
 	//build vocab credit list only if the tasks are of a type Site Visits
+		//vocab lists are pulled from a view titles credit_list_framing
+		//the administrative view for credit lists is credit_list_admin
 	if ($task_list->title == 'Site Visits') {
 		switch($node->title) {
 			case 'Insulation':
@@ -240,25 +242,26 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 				$view->set_display('insulation');
 				$view->pre_execute();
 				$view->execute();
-				dpm($view->result);
-
-				$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
-				$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
-				dpm($terms_insulation);
-				$vars['terms'] = $terms_insulation;
+				//no longer loading vocabs like this. Using Draggable Views and Views
+					//$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
+					//$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
+				$vars['terms'] = $view->result;
 				break;
 
 			case 'Framing':
-				$vocab_framing = taxonomy_vocabulary_machine_name_load('credit_list_framing');
-				$terms_framing = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_framing->vid));
-				dpm($terms_framing);
-				$vars['terms'] = $terms_framing;
+				$view = views_get_view('credit_list_selector');
+				$view->set_display('framing');
+				$view->pre_execute();
+				$view->execute();
+				$vars['terms'] = $view->result;
 				break;
 
 			case 'Final + Blower Door':
-				$vocab_blower = taxonomy_vocabulary_machine_name_load('credit_list_framing');
-				$terms_blower = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_blower->vid));
-				$vars['terms'] = $terms_blower;
+				$view = views_get_view('credit_list_selector');
+				$view->set_display('finalblowerdoor');
+				$view->pre_execute();
+				$view->execute();
+				$vars['terms'] = $view->result;
 				break;
 			default:
 				 $vars['terms'] = '';
@@ -271,7 +274,7 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 			$i=0;
 			foreach ($vars['terms'] as $tid => $term){
 				//arguments go to $form_state['build_info']['args']
-				$vars['credit_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->name, $node->nid);
+				$vars['credit_form'][] = drupal_get_form('ec_task_credits_credit_form', $term->tid, $term->taxonomy_term_data_name, $node->nid);
 				$i++;
 			}
 		}
