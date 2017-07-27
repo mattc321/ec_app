@@ -71,12 +71,82 @@ function ec_task_credits_menu() {
 		'access arguments' => array('access content'),
 		'delivery callback' => 'ec_task_credits_download_images_ajax',
 	];
+	$items['update/task-credits-term/%ctools_js/%/%'] = [
+		'page callback' => 'ec_task_credits_update_credit_term',
+		'access callback' => TRUE,
+		'type' => MENU_CALLBACK,
+		'page arguments' => array(2,3,4), //the term id, the vocab
+		'access arguments' => array('access content'),
+//		'delivery callback' => 'ec_task_credits_update_credit_term_ajax',
+	];
+
 	return $items;
 }
+
+function ec_task_credits_update_credit_term($ajax = null, $tid = null, $vocab = null) {
+	watchdog('ec_task_credits', 'running page callback @ajax, @tid, @vocab', array('@ajax' => $ajax, '@tid' => $tid, '@vocab' => $vocab));
+	if ($ajax) {
+		ctools_include('ajax');
+		ctools_include('modal');
+
+		$form_state = array(
+			'ajax' => TRUE,
+			'title' => t('Add to List'),
+			'node_to_add' => 111,
+		);
+
+		// Use ctools to generate ajax instructions for the browser to create
+		// a form in a modal popup.
+
+		$output = ctools_modal_form_wrapper('update_task_credit_form', $form_state);
+
+		// If the form has been submitted, there may be additional instructions
+		// such as dismissing the modal popup.
+		if (!empty($form_state['ajax_commands'])) {
+			$output = $form_state['ajax_commands'];
+
+		}
+
+		// Return the ajax instructions to the browser via ajax_render().
+		print ajax_render($output);
+		drupal_exit();
+	} else {
+		return drupal_get_form('update_task_credit_form', $tid);
+	}
+}
+//function ec_task_credits_update_credit_term_ajax($response) {
+//	print $response;
+//}
 function clean($string) {
 	$string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
 	return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
 }
+
+function update_task_credit_form($form, $form_state) {
+	$form = array();
+	$form['term_name'] = array(
+		'#type' => 'textfield',
+		'#default_value' => 'test',
+		'#id' => 'new-term-name',
+		'#title' => t('Credit'),
+	);
+
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#id' => 'submit-term-name',
+		'#title' => t('Save'),
+		'#value' => t('Save'),
+		'#ajax' => array(
+			'callback' => 'update_task_credit_form_ajax_submit',
+			'wrapper' => 'ec-task-credit-update-form-wrapper',
+			'method' => 'replace',
+			'effect' => 'fade',
+		),
+	);
+
+	return $form;
+}
+
 /**
  *	Download Task Credits menu callback.
  **/
@@ -672,5 +742,45 @@ function node_exists($node_id) {
 		return true;
 	} else {
 		return false;
+	}
+}
+
+function ec_task_credits_views_pre_render(&$view) {
+	if ($view->name == 'credit_list_admin') {
+
+
+	}
+}
+function ec_task_credits_views_pre_view(&$view, &$display_id, &$args) {
+	if ($view->name == 'credit_list_admin') {
+//		$view->add_item($view->current_display, 'field', 'views', 'nothing', array(
+//			'label' => 'My field',
+//			'alter' => array('text' => l('Load modal content', 'update/task-credits-term/nojs/12/13', array(
+//				'attributes' => array('class' => 'ctools-use-modal update-credit-modal')))),
+//			'element_class' => 'my-field',
+//			'element_default_classes' => 0,
+//		), 'my_field');
+
+		$types = views_object_types();
+//		dpm($types);
+//		dpm($view->get_items('field',$view->current_display));
+//		$poop = $view->get_item($view->current_display,'field','tid');
+//		dpm();
+//		dpm($poop);
+
+	}
+}
+
+function ec_task_credits_views_post_render(&$view, &$output, &$cache) {
+	// When using full pager, disable any time-based caching if there are less
+	// then 10 results.
+
+	if ($view->name =='credit_list_admin') {
+//		dpm($view);
+		ctools_include('ajax');
+		ctools_include('modal');
+
+		// Add CTools' javascript to the page.
+		ctools_modal_add_js();
 	}
 }
