@@ -91,8 +91,9 @@ function ec_task_credits_update_credit_term($ajax = null, $tid = null, $vocab = 
 
 		$form_state = array(
 			'ajax' => TRUE,
-			'title' => t('Add to List'),
-			'node_to_add' => 111,
+			'title' => t('Update Credit Text'),
+			'tid' => $tid,
+			'vid' => $vocab,
 		);
 
 		// Use ctools to generate ajax instructions for the browser to create
@@ -104,9 +105,19 @@ function ec_task_credits_update_credit_term($ajax = null, $tid = null, $vocab = 
 		// such as dismissing the modal popup.
 		if (!empty($form_state['ajax_commands'])) {
 			$output = $form_state['ajax_commands'];
-
 		}
 
+		//if the form was executed, give other ajax instruction
+		if (!empty($form_state['executed'])) {
+			$output = array();
+			$output[] = ctools_modal_command_dismiss();
+//			$output[] = $form_state['ajax_commands'][] = ajax_command_alert('test');
+//			$output[] = $form_state['ajax_commands'][] = ajax_command_append('#tax-term-name-'.$form_state['tid'],'THIS IS MY APPENDING!');
+			$output[] = $form_state['ajax_commands'][] = ajax_command_replace('#tax-term-name-'.$form_state['tid'],
+				'<div id="tax-term-name-'.$form_state['tid'].'" class="animated fadeIn">'.$form_state['values']['term_name']);
+
+			$form_state['rebuild'] = TRUE;
+		}
 		// Return the ajax instructions to the browser via ajax_render().
 		print ajax_render($output);
 		drupal_exit();
@@ -124,9 +135,22 @@ function clean($string) {
 
 function update_task_credit_form($form, $form_state) {
 	$form = array();
+
+	$credit_text = taxonomy_term_load($form_state['tid']);
+
+	if (!$credit_text) {
+		$form['term_name'] = array(
+			'#type' => 'textfield',
+			'#default_value' => 'No text was found for this term!',
+			'#id' => 'new-term-name',
+			'#title' => t('Credit'),
+		);
+		return $form;
+	}
+
 	$form['term_name'] = array(
-		'#type' => 'textfield',
-		'#default_value' => 'test',
+		'#type' => 'textarea',
+		'#default_value' => $credit_text->name,
 		'#id' => 'new-term-name',
 		'#title' => t('Credit'),
 	);
@@ -136,20 +160,55 @@ function update_task_credit_form($form, $form_state) {
 		'#id' => 'submit-term-name',
 		'#title' => t('Save'),
 		'#value' => t('Save'),
-		'#ajax' => array(
-			'callback' => 'update_task_credit_form_ajax_submit',
-			'wrapper' => 'ec-task-credit-update-form-wrapper',
-			'method' => 'replace',
-			'effect' => 'fade',
-		),
+//		'#ajax' => array(
+//			'callback' => 'update_task_credit_form_ajax_submit',
+//			'wrapper' => 'ec-task-credit-update-form-wrapper',
+//			'method' => 'replace',
+//			'effect' => 'fade',
+//		),
 	);
 
 	return $form;
 }
 
+function update_task_credit_form_submit ($form, $form_state) {
+
+	if ($form_state['tid']) {
+		$term = taxonomy_term_load($form_state['tid']);
+		$term->name = $form_state['values']['term_name']; //change existed taxonomy term
+		$term->vid = $form_state['vid'];
+		taxonomy_term_save($term);
+		$form_state['rebuild'] = TRUE;
+	}
+
+}
+
+//function update_task_credit_form_ajax_submit ($form, $form_state) {
+//	dpm('yea4');
+////	$commands[] = $form_state['ajax_commands'][] = ctools_modal_command_dismiss();
+//	$commands[] = $form_state['ajax_commands'][] = ajax_command_alert('test');
+//	return array(
+//		'#type' => 'ajax',
+//		'#commands' => $commands,
+//	);
+//
+//}
+
 /**
  *	Download Task Credits menu callback.
  **/
+
+/**
+ * Create a taxonomy term and return the tid.
+ */
+function custom_create_taxonomy_term($name, $vid) {
+	$term = new stdClass();
+	$term->name = $name;
+	$term->vid = $vid;
+	taxonomy_term_save($term);
+	return $term->tid;
+}
+
 function ec_task_credits_download_images($task_nid) {
 
 	if (!empty($task_nid)) {
@@ -746,41 +805,28 @@ function node_exists($node_id) {
 }
 
 function ec_task_credits_views_pre_render(&$view) {
+	//add ajax and modal to view for editing
 	if ($view->name == 'credit_list_admin') {
-
-
-	}
-}
-function ec_task_credits_views_pre_view(&$view, &$display_id, &$args) {
-	if ($view->name == 'credit_list_admin') {
-//		$view->add_item($view->current_display, 'field', 'views', 'nothing', array(
-//			'label' => 'My field',
-//			'alter' => array('text' => l('Load modal content', 'update/task-credits-term/nojs/12/13', array(
-//				'attributes' => array('class' => 'ctools-use-modal update-credit-modal')))),
-//			'element_class' => 'my-field',
-//			'element_default_classes' => 0,
-//		), 'my_field');
-
-		$types = views_object_types();
-//		dpm($types);
-//		dpm($view->get_items('field',$view->current_display));
-//		$poop = $view->get_item($view->current_display,'field','tid');
-//		dpm();
-//		dpm($poop);
-
-	}
-}
-
-function ec_task_credits_views_post_render(&$view, &$output, &$cache) {
-	// When using full pager, disable any time-based caching if there are less
-	// then 10 results.
-
-	if ($view->name =='credit_list_admin') {
-//		dpm($view);
 		ctools_include('ajax');
 		ctools_include('modal');
 
 		// Add CTools' javascript to the page.
 		ctools_modal_add_js();
+
 	}
 }
+
+
+//function ec_task_credits_views_post_render(&$view, &$output, &$cache) {
+//	// When using full pager, disable any time-based caching if there are less
+//	// then 10 results.
+//
+//	if ($view->name =='credit_list_admin') {
+////		dpm($view);
+//		ctools_include('ajax');
+//		ctools_include('modal');
+//
+//		// Add CTools' javascript to the page.
+//		ctools_modal_add_js();
+//	}
+//}
