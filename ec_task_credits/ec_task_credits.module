@@ -111,10 +111,13 @@ function ec_task_credits_update_credit_term($ajax = null, $tid = null, $vocab = 
 		if (!empty($form_state['executed'])) {
 			$output = array();
 			$output[] = ctools_modal_command_dismiss();
-//			$output[] = $form_state['ajax_commands'][] = ajax_command_alert('test');
-//			$output[] = $form_state['ajax_commands'][] = ajax_command_append('#tax-term-name-'.$form_state['tid'],'THIS IS MY APPENDING!');
+
 			$output[] = $form_state['ajax_commands'][] = ajax_command_replace('#tax-term-name-'.$form_state['tid'],
-				'<div id="tax-term-name-'.$form_state['tid'].'" class="animated fadeIn">'.$form_state['values']['term_name']);
+				'<span id="tax-term-name-'.$form_state['tid'].'" class="animated fadeIn">'.$form_state['values']['term_name'].'</span>');
+
+			$td = ($form_state['values']['term_disabled'] == 1) ? 'yes' : 'no';
+			$output[] = $form_state['ajax_commands'][] = ajax_command_replace('#tax-term-disabled-'.$form_state['tid'],
+				'<span id="tax-term-disabled-'.$form_state['tid'].'" class="animated fadeIn term-disabled-'.$td.'">'.$td.'</span>');
 
 			$form_state['rebuild'] = TRUE;
 		}
@@ -154,18 +157,18 @@ function update_task_credit_form($form, $form_state) {
 		'#id' => 'new-term-name',
 		'#title' => t('Credit'),
 	);
+	$form['term_disabled'] = array(
+		'#type' => 'checkbox',
+		'#default_value' => $credit_text->field_credit_disabled[LANGUAGE_NONE][0]['value'],
+		'#id' => 'term-disabled',
+		'#title' => t('Disabled'),
+	);
 
 	$form['submit'] = array(
 		'#type' => 'submit',
 		'#id' => 'submit-term-name',
 		'#title' => t('Save'),
 		'#value' => t('Save'),
-//		'#ajax' => array(
-//			'callback' => 'update_task_credit_form_ajax_submit',
-//			'wrapper' => 'ec-task-credit-update-form-wrapper',
-//			'method' => 'replace',
-//			'effect' => 'fade',
-//		),
 	);
 
 	return $form;
@@ -176,9 +179,10 @@ function update_task_credit_form_submit ($form, $form_state) {
 	if ($form_state['tid']) {
 		$term = taxonomy_term_load($form_state['tid']);
 		$term->name = $form_state['values']['term_name']; //change existed taxonomy term
+		$term->field_credit_disabled['und'][0]['value'] = $form_state['values']['term_disabled'];
 		$term->vid = $form_state['vid'];
 		taxonomy_term_save($term);
-		$form_state['rebuild'] = TRUE;
+//		$form_state['rebuild'] = TRUE;
 	}
 
 }
@@ -194,9 +198,7 @@ function update_task_credit_form_submit ($form, $form_state) {
 //
 //}
 
-/**
- *	Download Task Credits menu callback.
- **/
+
 
 /**
  * Create a taxonomy term and return the tid.
@@ -209,6 +211,9 @@ function custom_create_taxonomy_term($name, $vid) {
 	return $term->tid;
 }
 
+/**
+ *	Download Task Credits menu callback.
+ **/
 function ec_task_credits_download_images($task_nid) {
 
 	if (!empty($task_nid)) {
