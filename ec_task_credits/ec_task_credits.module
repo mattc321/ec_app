@@ -462,29 +462,55 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
 			case 'Insulation':
 
 				$view = views_get_view('credit_list_selector');
-				$view->set_display('insulation');
-				$view->pre_execute();
-				$view->execute();
+				if ($view && $view->access('insulation')) {
+					$view->set_display('insulation');
+					$view->pre_execute();
+					$view->execute();
+					$vars['terms'] = $view->result;
+				} else {
+					watchdog('ec_task_credits','View credit_list_selector was not found. This view must exist in order for this module
+					to work. This view returns the credit lists in each of its displays.');
+					drupal_set_message('The EC Task Credits module cannot work because a supporting view
+					was not found. The view named credit_list_selector or its displays are missing.');
+					$vars['terms'] = '';
+				}
 				//no longer loading vocabs like this. Using Draggable Views and Views
 					//$vocab_insulation = taxonomy_vocabulary_machine_name_load('credit_list_insulation');
 					//$terms_insulation = entity_load('taxonomy_term', FALSE, array('vid' => $vocab_insulation->vid));
-				$vars['terms'] = $view->result;
+
 				break;
 
 			case 'Framing':
 				$view = views_get_view('credit_list_selector');
-				$view->set_display('framing');
-				$view->pre_execute();
-				$view->execute();
-				$vars['terms'] = $view->result;
+				if ($view && $view->access('framing')) {
+					$view->set_display('framing');
+					$view->pre_execute();
+					$view->execute();
+					$vars['terms'] = $view->result;
+				} else {
+					watchdog('ec_task_credits','View credit_list_selector was not found. This view must exist in order for this module
+					to work. This view returns the credit lists in each of its displays.');
+					drupal_set_message('The EC Task Credits module cannot work because a supporting view
+					was not found. The view named credit_list_selector or its displays are missing.');
+					$vars['terms'] = '';
+				}
 				break;
 
 			case 'Final + Blower Door':
 				$view = views_get_view('credit_list_selector');
-				$view->set_display('finalblowerdoor');
-				$view->pre_execute();
-				$view->execute();
-				$vars['terms'] = $view->result;
+				if ($view && $view->access('finalblowerdoor')) {
+					$view->set_display('finalblowerdoor');
+					$view->pre_execute();
+					$view->execute();
+					$vars['terms'] = $view->result;
+				} else {
+					watchdog('ec_task_credits','View credit_list_selector was not found. This view must exist in order for this module
+					to work. This view returns the credit lists in each of its displays.');
+					drupal_set_message('The EC Task Credits module cannot work because a supporting view
+					was not found. The view named credit_list_selector or its displays are missing.');
+					$vars['terms'] = '';
+				}
+
 				break;
 			default:
 				 $vars['terms'] = '';
