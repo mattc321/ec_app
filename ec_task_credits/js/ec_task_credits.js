@@ -33,7 +33,6 @@
 			}
 		};
 
-
 		$('#download-images-btn').click(function() {
 			$(this).html('Preparing Download');
 			var taskNid = $(this).data('id');
