@@ -123,10 +123,9 @@
 		//if ($('.page-map-of-projects').length > 0) {
 			$(window).load(function() {
 				$(".loadergif").fadeOut("slow");
-			})
+			});
 		//}
-		
-		
+
 		
 		//PROJECTS NODE FORM
 		if ($('.node-type-projects').length > 0 || $('.node-type-opportunities').length > 0) {

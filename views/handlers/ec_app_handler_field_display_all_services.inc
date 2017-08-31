@@ -19,7 +19,7 @@ class ec_app_handler_field_display_all_services extends views_handler_field {
     //}
     // $tid = $term->tid;
     $this->ensure_my_table();
-    $sql = "select GROUP_CONCAT(svc.title SEPARATOR '<br>')
+    $sql = "select GROUP_CONCAT(svc.title SEPARATOR ' :: ')
 				from `node` p 
 				join `field_data_field_opportunities` fo on p.nid = fo.entity_id 
 				join `field_data_field_opportunity_services` s on fo.field_opportunities_nid = s.entity_id
@@ -29,5 +29,9 @@ class ec_app_handler_field_display_all_services extends views_handler_field {
 				group by p.nid";
     $this->field_alias = $this->query->add_field(NULL, "($sql)", 'field_display_all_services');
   }
+	function render($values) {
+		dpm('wtfd');
+		dpm($values);
+	}
 
 }

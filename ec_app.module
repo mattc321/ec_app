@@ -466,9 +466,13 @@ function ec_app_mail ($key, &$message, $params) {
 		$message['to'] = $params['uemail'];
 		$message['subject'] = t('Comment Tag: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
 		$message['body'][] = t('Posted by: @who', array('@who' => $params['poster']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Comment: @cbod', array('@cbod' => $params['body']));
+		$message['body'][] = '</br>';
 		$alias = drupal_get_path_alias('node/'.$params['unode']);
 		$message['body'][] = t('Go here to view: https://ecteam.net/@alias', array('@alias' => $alias));
 	}
@@ -476,18 +480,24 @@ function ec_app_mail ($key, &$message, $params) {
 		$message['to'] = $params['uemail'];
 		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
 		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
-		$message['body'][] = t('Go here to view: http://ecteam.net/@unode', array('@unode' => $params['unode']));
+		$message['body'][] = '</br>';
+		$message['body'][] = t('Go here to view: https://ecteam.net/@unode', array('@unode' => $params['unode']));
 	}
 	if($key ==  'notify_ec_user_2') {
 		//this is called from presave
 		$message['to'] = $params['uemail'];
 		$message['subject'] = t('A task was assigned to you: @account - @title', array('@account' => $params['naccount'], '@title' => $params['ntitle']));
 		$message['body'][] = t('@who has assigned a task to you: @ttitle', array('@who' => $params['poster'], '@ttitle' => $params['ttitle']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Builder/Account: @account', array('@account' => $params['naccount']));
+		$message['body'][] = '</br>';
 		$message['body'][] = t('Title/Project: @title', array('@title' => $params['ntitle']));
-		$message['body'][] = t('Go here to view: http://ecteam.net/@unode', array('@unode' => $params['unode']));
+		$message['body'][] = '</br>';
+		$message['body'][] = t('Go here to view: https://ecteam.net/@unode', array('@unode' => $params['unode']));
 
   }
 }
@@ -1234,6 +1244,7 @@ if ($node->nid == 26274) {
 	 break;
 		
      case 'projects':
+//		 dpm($node);
 			
 		//GET CONTACTS FROM OPPORTUNITY AND BRING OVER, IF USER CREATED A PROJECT FROM AN OPPORTUNITY
 		 //Add Bring over Contacts link and Add Contact button
@@ -2032,6 +2043,7 @@ function ec_app_views_pre_render(&$view) {
 			}
 		}
 	}
+
 }
 
 /**
