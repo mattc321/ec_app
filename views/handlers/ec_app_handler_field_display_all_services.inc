@@ -30,8 +30,15 @@ class ec_app_handler_field_display_all_services extends views_handler_field {
     $this->field_alias = $this->query->add_field(NULL, "($sql)", 'field_display_all_services');
   }
 	function render($values) {
-		dpm('wtfd');
-		dpm($values);
+		$x = explode('::',$values->field_display_all_services);
+		if (!empty($x)) {
+			$val = '';
+			foreach ($x as $item) {
+				$val .= $item.'</br>';
+			}
+			return $val;
+		}
+		return '';
 	}
 
 }
