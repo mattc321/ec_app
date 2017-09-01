@@ -91,33 +91,35 @@
 		
 	
 		//on the projects page this shows/displays the multi select filter
-		// if ($('#edit-field-project-status-tid').length > 0 && $('#tid_select').length > 0) {
-			// var x=document.getElementById("edit-field-project-status-tid");			
-			// x.style.display = "none";
-			// var tname = "";
-			// p=0;
-			// for (var i = 0; i < x.options.length; i++) {
-				// if(x.options[i].selected){
-					// p=p+1;
-					// if(p==1){
-						// tname += (x.options[i].text);
-					// } else {
-						// tname += ', ' + (x.options[i].text);
-					// }
+		 if ($('#edit-field-project-status-tid').length > 0 && $('#tid_select').length > 0) {
+			 var x=document.getElementById("edit-field-project-status-tid");
+			 $('#tid_select').addClass('tid-select-cont');
+			 x.style.display = "none";
+			 var tname = "";
+			 var p=0;
+			 for (var i = 0; i < x.options.length; i++) {
+				 if(x.options[i].selected){
+					 p=p+1;
+					 if(p==1){
+						 tname += (x.options[i].text);
+					 } else {
+						 tname += ', ' + (x.options[i].text);
+					 }
 	
-				// }
-			// }
-			// if (tname == ""){tname="Displaying All";}
-			// document.getElementById("tid_select").innerHTML = tname;
-			// document.getElementById("tid_select").onclick = function() {
-				// if(x.style.display == "block"){
-					// x.style.display = "none";
-				// } else {
-					// x.style.display = "block";
-				// }
+				 }
+			 }
+			 if (tname == ""){tname="Displaying All";}
+			 document.getElementById("tid_select").innerHTML = tname;
+			 document.getElementById("tid_select").onclick = function() {
+
+				 if(x.style.display == "block"){
+					 x.style.display = "none";
+				 } else {
+					 x.style.display = "block";
+				 }
 			
-			// };
-		// }
+			 };
+		 }
 		
 		//MAP OF PROJECTS PAGE
 		//if ($('.page-map-of-projects').length > 0) {
