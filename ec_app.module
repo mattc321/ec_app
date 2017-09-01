@@ -685,7 +685,9 @@ function ec_app_form_alter(&$form, &$form_state, $form_id) {
 			unset($form['field_project_status_tid_op']['#options']['and']);
 			unset($form['field_project_status_tid_op']['#options']['empty']);
 			unset($form['field_project_status_tid_op']['#options']['not empty']);
-			if ($form['#id'] == 'views-exposed-form-projects-page-3' || $form['#id'] == 'views-exposed-form-map-of-projects-page') {
+
+			//turn on the selectize library to make multi selects less crappy
+			if ($form['#id'] == 'views-exposed-form-projects-page-3' || $form['#id'] == 'views-exposed-form-map-of-projects-2-page') {
 				//tid_select corresponds with js
 				$form['field_project_status_tid']['#suffix'] = '<div id="tid_select"></div>';
 			}
