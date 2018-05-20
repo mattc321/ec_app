@@ -80,7 +80,7 @@
 			});
 			
 		}
-				//selectize controls
+				//selectize controls used on map and projects page 
 		if ($('.test-selectize').length > 0) {
 			$.getScript("/sites/all/libraries/selectize/dist/js/standalone/selectize.min.js", function(){
 				 $('.test-selectize').selectize({
@@ -89,38 +89,40 @@
 			});
 		}
 		
-	
-		//on the projects page this shows/displays the multi select filter
-		 if ($('#edit-field-project-status-tid').length > 0 && $('#tid_select').length > 0) {
-			 var x=document.getElementById("edit-field-project-status-tid");
-			 $('#tid_select').addClass('tid-select-cont');
-			 x.style.display = "none";
-			 var tname = "";
-			 var p=0;
-			 for (var i = 0; i < x.options.length; i++) {
-				 if(x.options[i].selected){
-					 p=p+1;
-					 if(p==1){
-						 tname += (x.options[i].text);
-					 } else {
-						 tname += ', ' + (x.options[i].text);
-					 }
-	
-				 }
-			 }
-			 if (tname == ""){tname="Displaying All";}
-			 document.getElementById("tid_select").innerHTML = tname;
-			 document.getElementById("tid_select").onclick = function() {
 
-				 if(x.style.display == "block"){
-					 x.style.display = "none";
-				 } else {
-					 x.style.display = "block";
-				 }
-			
-			 };
-		 }
-		
+			//COMMENTED OUT ON 9/2 - ADDING TEST-SELECTIZE CLASS TO THIS CONTROL LOADS THE SELECTIZE LIBRARIES ONTO IT.
+			// ALTER THE FORM AND ADD TEST-SELECTIZE
+		//on the projects map page this shows/displays the multi select filter
+		// if ($('.page-map-of-projects').length > 0 && ('#edit-field-project-status-tid').length > 0 && $('#tid_select').length > 0) {
+		//	 var x=document.getElementById("edit-field-project-status-tid");
+		//	 $('#tid_select').addClass('tid-select-cont');
+		//	 x.style.display = "none";
+		//	 var tname = "";
+		//	 var p=0;
+		//	 for (var i = 0; i < x.options.length; i++) {
+		//		 if(x.options[i].selected){
+		//			 p=p+1;
+		//			 if(p==1){
+		//				 tname += (x.options[i].text);
+		//			 } else {
+		//				 tname += ', ' + (x.options[i].text);
+		//			 }
+        //
+		//		 }
+		//	 }
+		//	 if (tname == ""){tname="Displaying All";}
+		//	 document.getElementById("tid_select").innerHTML = tname;
+		//	 document.getElementById("tid_select").onclick = function() {
+        //
+		//		 if(x.style.display == "block"){
+		//			 x.style.display = "none";
+		//		 } else {
+		//			 x.style.display = "block";
+		//		 }
+        //
+		//	 };
+		// }
+
 		//MAP OF PROJECTS PAGE
 		//if ($('.page-map-of-projects').length > 0) {
 			$(window).load(function() {

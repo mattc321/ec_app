@@ -702,7 +702,6 @@ function ec_app_form_alter(&$form, &$form_state, $form_id) {
 	break;
 
     case 'opportunities_node_form':
-		
 		//Add Label used by js for setting alerts/messages
 		$form['field_close_date'][LANGUAGE_NONE]['#suffix'] = '<div class="ex_msg">Typical project end date</div></div>';
 		
@@ -894,12 +893,13 @@ function ec_app_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
 		 }
 	}
 	// main /projects page - projects search etc. There is a tpl file for the projects exposed search form views-exposed-form--projects--page_3.tpl.php
-	if ($form['#id'] == 'views-exposed-form-projects-page-3') {
+	//by adding test-selectize to the tid select, the js adds the selectize library
+	if ($form['#id'] == 'views-exposed-form-projects-page-3' || $form['#id']=='views-exposed-form-map-of-projects-2-page') {
+
 		if (isset($form['field_project_status_tid_op'])) {
 			$form['field_project_status_tid_op']['#type'] = 'radios';
 		}
 		 if (isset($form['field_project_status_tid'])) {
-			 
 			$form['#attached']['js'][] = libraries_get_path('selectize') . '/dist/js/standalone/selectize.min.js';
 			$form['#attached']['css'][] = libraries_get_path('selectize') . '/dist/css/selectize.default.css';
 			$form['field_project_status_tid']['#attributes']['class'][]='test-selectize';
@@ -1182,7 +1182,9 @@ function ec_app_ajax_callback($page_callback_result) {
  **/
 function ec_app_node_view($node, $view_mode, $langcode) {
 global $user;
-
+//if (isset($_GET['dd'])) {
+//	dpm($node);
+//}
 // if (isset($_GET['task'])=='deletetasks' && $user->uid == 1) {
 //	 if (count($node->field_project_tasks[LANGUAGE_NONE]) > 0) {
 //		foreach ($node->field_project_tasks[LANGUAGE_NONE] as $pee => $balue) {
@@ -1352,7 +1354,7 @@ if ($node->nid == 26274) {
 		 if (!empty($node->content['field_permitting_number'])) {
 			 foreach($node->field_permitting_number[LANGUAGE_NONE] as $key => $permitnum) {
 				 $myvalue = $permitnum['value'];
-				 $node->content['field_permitting_number'][$key]['#markup'] = '<a href="http://web1.seattle.gov/DPD/permitstatus/Project.aspx?id='.$myvalue.'" target="_blank">'.$myvalue.'</a>';
+				 $node->content['field_permitting_number'][$key]['#markup'] = '<a href="https://cosaccela.seattle.gov/portal/Cap/GlobalSearchResults.aspx?QueryText='.$myvalue.'" target="_blank">'.$myvalue.'</a>';
 			 }
 
 		 }
@@ -1463,6 +1465,7 @@ if ($node->nid == 26274) {
 		 if(isset($node->field_project_contacts[LANGUAGE_NONE])) {
 			 foreach($node->field_project_contacts[LANGUAGE_NONE] as $contact_key => $con) {
 				 $contact_result .= views_embed_view('project_contacts_field_collection_view', 'block_2', $con['value']);
+				 //view is built in project contacts view tpl override
 			 }
 		 }
 		 $addcon = '<div class="clearfix"><a class="green-button sc-btn" href="/field-collection/field-project-contacts/add/node/'.$node->nid.'?destination=node/'.$node->nid.'">Add Contact</a></div>';
@@ -2102,6 +2105,19 @@ function ec_app_entity_update($entity, $type) {
 		
 	}
 }
+
+function ec_app_entity_presave($entity, $type) {
+//	$entity->changed = REQUEST_TIME;
+	if ($type=='field_collection_item' && $entity->field_name == 'field_units'){
+		$date = date('Y-m-d');
+		//if the field exists slap a date in it
+		if($entity->field_fc_last_updated) {
+			$entity->field_fc_last_updated[LANGUAGE_NONE][0]['value']=$date . ' 00:00:00';
+			$entity->field_fc_last_updated[LANGUAGE_NONE][0]['value2']=$date . ' 00:00:00';
+		}
+	}
+}
+
 
 function ec_app_node_update($node) {
 	switch ($node->type) {

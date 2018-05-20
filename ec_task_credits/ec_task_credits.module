@@ -543,9 +543,9 @@ function ec_task_credits_preprocess_vocab_list(&$vars) {
  * @return mixed
  */
 function check_credit($task_nid, $term_id) {
-	watchdog('ec_task_credits','Fn check_credit. 2 params passed
-				task_nid = @tnid
-				term_id = @termid', array('@tnid' => $task_nid, '@termid' => $term_id));
+	//watchdog('ec_task_credits','Fn check_credit. 2 params passed
+				//task_nid = @tnid
+				//term_id = @termid', array('@tnid' => $task_nid, '@termid' => $term_id));
 
 	$sql = "SELECT field_task_credit_term_reference_value term_id, tr.entity_id task_credit_nid FROM {field_data_field_task_credits} tc ";
 	$sql .= "join {field_data_field_task_credit_term_reference} tr on tr.entity_id = tc.field_task_credits_target_id ";
@@ -563,14 +563,14 @@ function check_credit($task_nid, $term_id) {
 }
 
 /**
- *	Custom Credit form.
+ *	Custom Credit form. Build the form on the task page
  **/
 function ec_task_credits_credit_form($form, &$form_state, $term_id, $term_name, $task_node) {
 	//the task nid is also in $form_state['build_info']['args'][2]);
 	if (!empty($term_id) && !empty($task_node)) {
 		//check to see if any of these terms have already been referenced
 		$credit_exists = check_credit($task_node, $term_id);
-		watchdog('ec_task_credits','Fn building form. Just ran check_credit. Return value is: @cc', array('@cc' => $credit_exists));
+		//watchdog('ec_task_credits','Fn building form. Just ran check_credit. Return value is: @cc', array('@cc' => $credit_exists));
 		$task_credit_node = (!empty($credit_exists)) ? node_load($credit_exists[0]->task_credit_nid): null;
 		$task_credit_image = (!empty($credit_exists)) ? $task_credit_node->field_task_credit_image[LANGUAGE_NONE][0]['fid']: null;
 		$task_credit_nid = (!empty($credit_exists)) ? $credit_exists[0]->task_credit_nid: null;
@@ -725,9 +725,11 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 				//['input']['browse_credit']['upload']
 				//http://www.zyxware.com/articles/5042/solved-how-to-use-managed-file-for-uploading-private-files-with-its-deletion-in-drupal-7
 			} else {
+				watchdog('ec_task_credits','browse_credit was not equal to zero. File load now');
 				$file = file_load($form_state['values']['browse_credit']);
 				$file->status = FILE_STATUS_PERMANENT;
 				file_save($file);
+
 			}
 
 		}
@@ -780,7 +782,6 @@ function ec_task_credits_form_ajax_submit($form, &$form_state) {
 				'image' => $image,
 				'poster' => $user->uid,
 			);
-
 			//create a new task credit node if its new
 			$new_credit_nid = ec_task_credits_add_new_node($node_info);
 		}
@@ -886,11 +887,13 @@ function ec_task_credits_add_new_node($node_info){
 	$new_credit->status = 1;
 	$new_credit->promote = 0;
 	$new_credit->comment = 0;
+	$new_credit->field_task_credit_image[LANGUAGE_NONE][0]['fid'] = $node_info['image'];
 	$new_credit->path['pathauto'] = 1;
 	$new_credit->field_task_credit_term_reference[LANGUAGE_NONE][0]['value'] = $node_info['tid'];
 
 	node_submit($new_credit);
 	node_save($new_credit);
+
 	return $new_credit->nid;
 
 	//watchdog('ec_app', 'Created new opportunity autotask from autotask nid '.$oatnode->nid);
