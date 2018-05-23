@@ -870,10 +870,16 @@ function ec_app_return_assignees(){
  */
 function ec_app_form_views_exposed_form_alter(&$form, &$form_state, $form_id) {
 
-//ADD ec-selectize class to any multi selects to apply selectize.js
-//Turns multi selects into sexy multi selects
-//----------------//
 
+  //alphabetize account drop down
+  if ($form['#id'] == 'views-exposed-form-opportunities-page') {
+    foreach($form_state['view']->filter as $filter) {
+        if($fid = $filter->options['expose']['identifier']) asort($form[$fid]['#options']);
+    }
+  }
+  //ADD ec-selectize class to any multi selects to apply selectize.js
+  //Turns multi selects into sexy multi selects
+  //----------------//
 	if ($form['#id'] == 'views-exposed-form-accounts-page') {
 		if (isset($form['field_account_type_tid'])) {
 			$form['#attached']['js'][] = libraries_get_path('selectize') . '/dist/js/standalone/selectize.min.js';
