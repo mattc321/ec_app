@@ -840,9 +840,13 @@ function ec_app_form_alter(&$form, &$form_state, $form_id) {
 	break;
 	case 'field_collection_item_form':
 		if ($form['field_name']['#value'] == 'field_units') {
-			$form['field_unit']['#attributes']['class'][] = 'update-check';
-			$form['field_unit_types']['#attributes']['class'][] = 'update-check';
-			$form['field_beds']['#attributes']['class'][] = 'update-check';
+			$array = array_filter($form, function($key) {
+
+			    return strpos($key, 'field_') === 0;
+			}, ARRAY_FILTER_USE_KEY);
+			foreach($array as $keyval => $val) {
+				$form[$keyval]['#attributes']['class'][] = 'update-check';
+			}
 			dpm($form);
 		}
 	break;
@@ -2100,6 +2104,7 @@ function ec_app_add_comment($text, $nid) {
 
 function ec_app_entity_update($entity, $type) {
   //update last updated field when a field value is updated on a unit entity
+	//THIS IS HAPPENING IN ec_app.js NOW
   // if ($type=='field_collection_item' && $entity->field_name == 'field_units') {
   //     $entityid = $entity->item_id;
   //     $date = date('Y-m-d');
