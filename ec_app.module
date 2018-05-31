@@ -2099,18 +2099,17 @@ function ec_app_add_comment($text, $nid) {
 }
 
 function ec_app_entity_update($entity, $type) {
-dpm($type);
   //update last updated field when a field value is updated on a unit entity
-  if ($type=='field_collection_item' && $entity->field_name == 'field_units') {
-      $entityid = $entity->item_id;
-      $date = date('Y-m-d');
-      $e_updated = db_update('field_data_field_fc_last_updated') // Table name no longer needs {}
-                      ->fields(array(
-                        'field_fc_last_updated_value' => $date . ' 00:00:00',
-                      ))
-      ->condition('entity_id', $entityid, '=')
-      ->execute();
-  }
+  // if ($type=='field_collection_item' && $entity->field_name == 'field_units') {
+  //     $entityid = $entity->item_id;
+  //     $date = date('Y-m-d');
+  //     $e_updated = db_update('field_data_field_fc_last_updated') // Table name no longer needs {}
+  //                     ->fields(array(
+  //                       'field_fc_last_updated_value' => $date . ' 00:00:00',
+  //                     ))
+  //     ->condition('entity_id', $entityid, '=')
+  //     ->execute();
+  // }
 
 	//If subcontractor field collection is updated/edited on the node view
 	if ($type=='field_collection_item' && $entity->field_name == 'field_fc_subcontractors'){

@@ -198,11 +198,8 @@
         const monthNames = ["January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November", "December"
         ];
-
         var d = new Date();
-        // var strDate = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
         var strDate = monthNames[d.getMonth()] + " " + d.getDate() + " " + d.getFullYear();
-        console.log(strDate);
         $('input[id^="edit-field-fc-last-updated-und"]').val(strDate);
       });
 		}
