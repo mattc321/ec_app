@@ -841,13 +841,13 @@ function ec_app_form_alter(&$form, &$form_state, $form_id) {
 	case 'field_collection_item_form':
 		if ($form['field_name']['#value'] == 'field_units') {
 			$array = array_filter($form, function($key) {
-
 			    return strpos($key, 'field_') === 0;
 			}, ARRAY_FILTER_USE_KEY);
 			foreach($array as $keyval => $val) {
-				$form[$keyval]['#attributes']['class'][] = 'update-check';
+				if ($keyval != 'field_fc_last_updated_value') {
+					$form[$keyval]['#attributes']['class'][] = 'update-check';
+				}
 			}
-			dpm($form);
 		}
 	break;
   }
