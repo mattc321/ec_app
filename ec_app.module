@@ -1384,7 +1384,12 @@ if ($node->nid == 26274) {
 				 }
 			 }
 		 } else {
-			 dpm(1);
+			 //if its not set default it to using Seattle permit url
+			 foreach($node->field_permitting_number[LANGUAGE_NONE] as $key => $permitnum) {
+				 $permitNum = $permitnum['value'];
+				 $node->content['field_permitting_number'][$key]['#markup'] = '<a href="https://cosaccela.seattle.gov/portal/Cap/GlobalSearchResults.aspx?QueryText='.$permitNum.'" target="_blank">'.$permitNum.'</a>';
+			 }
+
 		 }
 		 //display as map link
 		 if (!empty($node->content['field_address'])) {
