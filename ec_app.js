@@ -195,8 +195,8 @@
     //FIELD COLLECTION UNITS FORM CHANGE LAST UPDATED DATE
     if ($('.page-field-collection-field-units').length > 0) {
       $('.update-check input, .update-check select').change(function() {
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
         ];
         var d = new Date();
         var strDate = monthNames[d.getMonth()] + " " + d.getDate() + " " + d.getFullYear();
