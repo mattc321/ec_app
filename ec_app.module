@@ -1,4 +1,4 @@
-<?php
+694<?php
 /**
  * @file
  * Module file for custom behaviours and functions used by Evergreen Certified production
@@ -1368,13 +1368,23 @@ if ($node->nid == 26274) {
 		 //END CHECK RECALCULATE
 
 
-		 //display permit numbers as links - multi value field
-		 if (!empty($node->content['field_permitting_number'])) {
-			 foreach($node->field_permitting_number[LANGUAGE_NONE] as $key => $permitnum) {
-				 $myvalue = $permitnum['value'];
-				 $node->content['field_permitting_number'][$key]['#markup'] = '<a href="https://cosaccela.seattle.gov/portal/Cap/GlobalSearchResults.aspx?QueryText='.$myvalue.'" target="_blank">'.$myvalue.'</a>';
+		 //display permit numbers as links - multi value field - insert city and permit
+		 if (!empty($node->content['field_permitting_number']) && isset($node->field_permit_city[LANGUAGE_NONE])) {
+			 $pc = taxonomy_term_load($node->field_permit_city[LANGUAGE_NONE][0]['tid']);
+			 $pname = $pc->name;
+			 if (empty($pc->field_permit_url[LANGUAGE_NONE][0]['value'])) {
+				 drupal_set_message('There is no URL set for the permit city selected. Permit links will not work.');
+			 } else {
+				 $cityUrl = $pc->field_permit_url[LANGUAGE_NONE][0]['value'];
+				 foreach($node->field_permitting_number[LANGUAGE_NONE] as $key => $permitnum) {
+					 $permitNum = $permitnum['value'];
+					 $permitInsert = str_replace("[permit]", $permitNum, $cityUrl);
+					 $cityInsert = str_replace("[city]", $pname, $permitInsert);
+					 $node->content['field_permitting_number'][$key]['#markup'] = '<a href="'.$cityInsert.'" target="_blank">'.$permitNum.'</a>';
+				 }
 			 }
-
+		 } else {
+			 dpm(1);
 		 }
 		 //display as map link
 		 if (!empty($node->content['field_address'])) {
